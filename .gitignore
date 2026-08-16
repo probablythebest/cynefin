@@ -1,0 +1,6 @@
+# build intermediate, regenerated on every run
+src/merged-parts.json
+
+# OS noise
+Thumbs.db
+.DS_Store

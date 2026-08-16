@@ -1,0 +1,1086 @@
+<title>Cynefin Field Sheet</title>
+<style>
+  /* ── Tokens ─────────────────────────────────────────────────────────── */
+  :root{
+    color-scheme: light dark;
+
+    --paper:  #F0F1EC;
+    --sheet:  #F8F9F5;
+    --ink:    #1B211E;
+    --ink-2:  #4E5A55;
+    --muted:  #7C8883;
+    --rule:   #CDD3CB;
+    --plate:  #E6E9E1;
+    --plate-2:#DDE1D8;
+    --shadow: 0 1px 0 rgba(27,33,30,.06), 0 12px 28px -18px rgba(27,33,30,.45);
+    --inset-dim: none;
+
+    --h-clear:       #A07717;
+    --h-complicated: #2F6485;
+    --h-complex:     #2C7A5D;
+    --h-chaotic:     #A63F26;
+    --h-aporia:      #5B5578;
+
+    --serif: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Hoefler Text",Georgia,serif;
+    --sans: "Avenir Next Condensed","Roboto Condensed","Helvetica Neue Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif;
+
+    --w: 1120px;
+    --prose: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+    --paper:  #141815;
+    --sheet:  #1B211D;
+    --ink:    #E9ECE5;
+    --ink-2:  #AAB5AF;
+    --muted:  #7F8B85;
+    --rule:   #2C3531;
+    --plate:  #222925;
+    --plate-2:#1D2420;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 16px 34px -20px rgba(0,0,0,.9);
+    --inset-dim: brightness(.80) saturate(.94);
+
+    --h-clear:       #D9AE3F;
+    --h-complicated: #6BA7C9;
+    --h-complex:     #55B893;
+    --h-chaotic:     #E07A5F;
+    --h-aporia:      #A79FC0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:  #141815;
+    --sheet:  #1B211D;
+    --ink:    #E9ECE5;
+    --ink-2:  #AAB5AF;
+    --muted:  #7F8B85;
+    --rule:   #2C3531;
+    --plate:  #222925;
+    --plate-2:#1D2420;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 16px 34px -20px rgba(0,0,0,.9);
+    --inset-dim: brightness(.80) saturate(.94);
+
+    --h-clear:       #D9AE3F;
+    --h-complicated: #6BA7C9;
+    --h-complex:     #55B893;
+    --h-chaotic:     #E07A5F;
+    --h-aporia:      #A79FC0;
+  }
+
+  /* ── Base ───────────────────────────────────────────────────────────── */
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--serif);
+    font-size:17px;
+    line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:var(--w); margin:0 auto; padding:0 24px; }
+  p{ margin:0 0 1em; }
+  a{ color:inherit; text-underline-offset:3px; text-decoration-thickness:1px; }
+  :focus-visible{ outline:2px solid var(--ink); outline-offset:3px; border-radius:2px; }
+
+  .eyebrow{
+    font-family:var(--sans);
+    font-size:.7rem;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+  }
+
+  /* ── Masthead ───────────────────────────────────────────────────────── */
+  header.mast{
+    border-bottom:1px solid var(--rule);
+    background:
+      linear-gradient(var(--sheet),var(--sheet)) padding-box;
+    position:relative;
+    overflow:hidden;
+  }
+  header.mast::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(to right, var(--rule) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--rule) 1px, transparent 1px);
+    background-size:64px 64px;
+    opacity:.35;
+    pointer-events:none;
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,.9), transparent 82%);
+    -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,.9), transparent 82%);
+  }
+  .mast .wrap{ position:relative; z-index:1; padding-top:46px; padding-bottom:38px; }
+  .sheetline{
+    display:flex; flex-wrap:wrap; gap:6px 22px; align-items:baseline;
+    padding-bottom:20px; margin-bottom:26px;
+    border-bottom:1px solid var(--rule);
+  }
+  h1{
+    font-size:clamp(3rem,10vw,6.2rem);
+    line-height:.94;
+    margin:0;
+    font-weight:400;
+    letter-spacing:-.02em;
+    text-wrap:balance;
+  }
+  .say{
+    font-family:var(--sans);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-size:.78rem;
+    color:var(--ink-2);
+    margin-top:14px;
+  }
+  .say b{ color:var(--ink); font-weight:600; }
+  .thesis{
+    margin-top:22px;
+    max-width:56ch;
+    font-size:clamp(1.12rem,2.1vw,1.34rem);
+    line-height:1.5;
+    color:var(--ink-2);
+  }
+  .thesis em{ color:var(--ink); font-style:italic; }
+
+  /* ── Sections ───────────────────────────────────────────────────────── */
+  section{ padding:56px 0; border-bottom:1px solid var(--rule); }
+  .shead{ display:flex; align-items:baseline; gap:16px; margin-bottom:8px; }
+  .shead .rule{ flex:1; height:1px; background:var(--rule); }
+  h2{
+    font-size:clamp(1.5rem,3.2vw,2.1rem);
+    font-weight:400; margin:0 0 .35em; letter-spacing:-.01em; text-wrap:balance;
+  }
+  .sintro{ max-width:var(--prose); color:var(--ink-2); }
+
+  /* ── Terrain: map + panel ───────────────────────────────────────────── */
+  .terrain{
+    display:grid;
+    grid-template-columns:minmax(300px,1fr) minmax(340px,1.02fr);
+    gap:34px;
+    margin-top:30px;
+    align-items:start;
+  }
+  @media (max-width:900px){ .terrain{ grid-template-columns:1fr; } }
+
+  .mapcard{ position:sticky; top:20px; }
+  @media (max-width:900px){ .mapcard{ position:static; } }
+  svg.map{ width:100%; height:auto; display:block; touch-action:manipulation; }
+
+  .dom{ cursor:pointer; }
+  .dom .plate{
+    fill:var(--plate);
+    stroke:var(--rule);
+    stroke-width:1;
+    transition:fill .22s ease, stroke .22s ease;
+  }
+  .dom .contour{ stroke:var(--dh); fill:none; opacity:.30; stroke-width:1.1; transition:opacity .22s ease; }
+  .dom .dname{
+    font-family:var(--sans); font-size:15px; letter-spacing:.16em; font-weight:600;
+    fill:var(--ink); text-transform:uppercase;
+  }
+  .dom .dtriad{ font-family:var(--serif); font-size:12.5px; fill:var(--ink-2); font-style:italic; }
+  .dom .dprac{ font-family:var(--sans); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; fill:var(--muted); }
+  .dom:hover .plate{ fill:var(--plate-2); }
+  .dom:hover .contour{ opacity:.55; }
+  .dom[aria-pressed="true"] .plate{ fill:color-mix(in srgb, var(--dh) 15%, var(--plate)); stroke:var(--dh); stroke-width:1.8; }
+  .dom[aria-pressed="true"] .contour{ opacity:.85; }
+  .dom[aria-pressed="true"] .dname{ fill:var(--dh); }
+  .dom:focus-visible{ outline:none; }
+  .dom:focus-visible .plate{ stroke:var(--ink); stroke-width:2.4; stroke-dasharray:5 3; }
+
+  .dom[data-domain="clear"]{ --dh:var(--h-clear); }
+  .dom[data-domain="complicated"]{ --dh:var(--h-complicated); }
+  .dom[data-domain="complex"]{ --dh:var(--h-complex); }
+  .dom[data-domain="chaotic"]{ --dh:var(--h-chaotic); }
+  .dom[data-domain="aporia"]{ --dh:var(--h-aporia); }
+
+  .graticule{ stroke:var(--ink); opacity:.055; stroke-width:1; }
+  .frame{ fill:none; stroke:var(--rule); stroke-width:1; }
+  .cliff{ stroke:var(--h-chaotic); stroke-width:1.6; fill:none; }
+  .cliff-tick{ stroke:var(--h-chaotic); stroke-width:1.2; opacity:.75; }
+  .cliff-label{
+    font-family:var(--sans); font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+    fill:var(--h-chaotic);
+  }
+
+  .legend{
+    margin-top:14px; padding-top:14px; border-top:1px solid var(--rule);
+    display:flex; gap:12px; align-items:flex-start;
+    font-size:.9rem; color:var(--ink-2); line-height:1.45;
+  }
+  .legend svg{ flex:none; margin-top:3px; }
+
+  /* ── Domain panel ───────────────────────────────────────────────────── */
+  .tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
+  .tab{
+    font-family:var(--sans); font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+    font-weight:600;
+    display:inline-flex; align-items:center; gap:7px;
+    padding:7px 12px; border-radius:2px; cursor:pointer;
+    background:transparent; color:var(--muted);
+    border:1px solid var(--rule);
+    transition:color .18s ease, border-color .18s ease, background .18s ease;
+  }
+  .tab .dot{ width:7px; height:7px; border-radius:50%; background:var(--dh); flex:none; }
+  .tab:hover{ color:var(--ink); border-color:var(--ink-2); }
+  .tab[aria-pressed="true"]{ color:var(--ink); border-color:var(--dh); background:color-mix(in srgb, var(--dh) 10%, transparent); }
+  .tab[data-domain="clear"]{ --dh:var(--h-clear); }
+  .tab[data-domain="complicated"]{ --dh:var(--h-complicated); }
+  .tab[data-domain="complex"]{ --dh:var(--h-complex); }
+  .tab[data-domain="chaotic"]{ --dh:var(--h-chaotic); }
+  .tab[data-domain="aporia"]{ --dh:var(--h-aporia); }
+
+  .panel{
+    background:var(--sheet);
+    border:1px solid var(--rule);
+    border-top:3px solid var(--dh, var(--rule));
+    border-radius:3px;
+    padding:26px 28px 28px;
+    box-shadow:var(--shadow);
+  }
+  .panel[data-domain="clear"]{ --dh:var(--h-clear); }
+  .panel[data-domain="complicated"]{ --dh:var(--h-complicated); }
+  .panel[data-domain="complex"]{ --dh:var(--h-complex); }
+  .panel[data-domain="chaotic"]{ --dh:var(--h-chaotic); }
+  .panel[data-domain="aporia"]{ --dh:var(--h-aporia); }
+
+  .panel h3{
+    font-size:1.9rem; font-weight:400; margin:.15em 0 .1em; letter-spacing:-.01em;
+    color:var(--dh);
+  }
+  .panel .aka{ font-size:.86rem; color:var(--muted); font-style:italic; margin-bottom:1em; }
+  .panel .lead{ font-size:1.06rem; }
+
+  .facts{ display:grid; grid-template-columns:auto 1fr; gap:10px 20px; margin:22px 0 4px; padding-top:20px; border-top:1px solid var(--rule); }
+  .facts dt{ font-family:var(--sans); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:600; padding-top:.3em; }
+  .facts dd{ margin:0; }
+  .facts dd b{ font-weight:600; color:var(--dh); }
+
+  .watch{ margin-top:24px; padding-top:20px; border-top:1px solid var(--rule); }
+  .watch ul{ margin:.6em 0 0; padding-left:1.1em; }
+  .watch li{ margin-bottom:.45em; }
+  .watch li::marker{ color:var(--dh); }
+  .here{ margin-top:20px; font-size:.94rem; color:var(--ink-2); }
+  .here b{ font-family:var(--sans); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:.35em; }
+
+  /* ── Mermaid insets ─────────────────────────────────────────────────── */
+  .inset{
+    background:#EFEDE3;
+    border:1px solid rgba(27,33,30,.18);
+    border-radius:2px;
+    padding:14px 12px;
+    overflow-x:auto;
+    filter:var(--inset-dim);
+    box-shadow:inset 0 0 0 4px #EFEDE3, inset 0 0 22px rgba(27,33,30,.05);
+  }
+  .inset pre.mermaid{ margin:0; background:none; text-align:center; font-size:.8rem; color:#1B211E; }
+  .stack{ position:relative; min-height:150px; margin:20px 0 4px; }
+  .stack > .inset{
+    position:absolute; inset:0;
+    opacity:0; pointer-events:none;
+    transition:opacity .3s ease;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stack > .inset[data-active="true"]{ opacity:1; pointer-events:auto; }
+  .inset-cap{ font-family:var(--sans); font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:10px; }
+
+  /* ── Movement / orientation grid ────────────────────────────────────── */
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:34px; margin-top:30px; align-items:start; }
+  @media (max-width:860px){ .two{ grid-template-columns:1fr; } }
+
+  .moves{ list-style:none; margin:0; padding:0; }
+  .moves li{ padding:14px 0; border-bottom:1px solid var(--rule); }
+  .moves li:first-child{ border-top:1px solid var(--rule); }
+  .moves .mv{ font-family:var(--sans); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:var(--mvc,var(--ink-2)); display:block; margin-bottom:.25em; }
+  .moves p{ margin:0; font-size:.97rem; color:var(--ink-2); }
+  .moves p b{ color:var(--ink); font-weight:600; }
+
+  /* ── Orientation quiz ───────────────────────────────────────────────── */
+  .quiz{
+    background:var(--sheet); border:1px solid var(--rule); border-radius:3px;
+    padding:26px 28px 28px; box-shadow:var(--shadow);
+  }
+  .quiz .q{ font-size:1.22rem; line-height:1.4; margin:.3em 0 1.1em; text-wrap:balance; }
+  .opts{ display:flex; flex-direction:column; gap:8px; }
+  .opt{
+    font-family:var(--serif); font-size:1rem; text-align:left; line-height:1.4;
+    background:var(--paper); color:var(--ink);
+    border:1px solid var(--rule); border-left:3px solid var(--rule);
+    border-radius:2px; padding:12px 15px; cursor:pointer;
+    transition:border-color .18s ease, background .18s ease, transform .18s ease;
+  }
+  .opt:hover{ border-left-color:var(--ink); transform:translateX(3px); }
+  .verdict h4{
+    font-family:var(--serif); font-weight:400; font-size:1.8rem; margin:.1em 0 .3em; color:var(--vh);
+  }
+  .verdict .vlabel{ display:block; margin-bottom:.2em; }
+  .verdict p{ color:var(--ink-2); }
+  .verdict .note{
+    margin-top:14px; padding:12px 14px; border-left:3px solid var(--vh);
+    background:color-mix(in srgb, var(--vh) 8%, transparent);
+    font-size:.95rem; color:var(--ink);
+  }
+  .qbtns{ display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+  .btn{
+    font-family:var(--sans); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600;
+    padding:10px 16px; border-radius:2px; cursor:pointer;
+    background:var(--ink); color:var(--paper); border:1px solid var(--ink);
+    transition:opacity .18s ease;
+  }
+  .btn:hover{ opacity:.82; }
+  .btn.ghost{ background:transparent; color:var(--ink-2); border-color:var(--rule); }
+  .btn.ghost:hover{ color:var(--ink); border-color:var(--ink-2); }
+  .steps{ font-family:var(--sans); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+
+  /* ── Cautions ───────────────────────────────────────────────────────── */
+  .cautions{ display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:1px; margin-top:30px; background:var(--rule); border:1px solid var(--rule); }
+  .caution{ background:var(--paper); padding:22px 24px 24px; }
+  .caution h4{ font-size:1.06rem; font-weight:600; margin:.5em 0 .4em; text-wrap:balance; }
+  .caution p{ margin:0; font-size:.95rem; color:var(--ink-2); }
+
+  /* ── Footer ─────────────────────────────────────────────────────────── */
+  footer{ padding:44px 0 64px; color:var(--ink-2); font-size:.92rem; }
+  footer .cite{ max-width:var(--prose); }
+  footer .cite p{ margin-bottom:.7em; }
+  footer .colophon{ margin-top:26px; padding-top:18px; border-top:1px solid var(--rule); color:var(--muted); font-size:.84rem; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition-duration:.001ms !important; animation-duration:.001ms !important; }
+    .opt:hover{ transform:none; }
+  }
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="sheetline">
+      <span class="eyebrow">Sensemaking framework</span>
+      <span class="eyebrow">Snowden, 1999</span>
+      <span class="eyebrow">Five domains &middot; one cliff</span>
+    </div>
+    <h1>Cynefin</h1>
+    <div class="say">Welsh &middot; <b>kuh&#8209;NEV&#8209;in</b> &middot; the place of your multiple belongings</div>
+    <p class="thesis">
+      Before you choose what to do, work out <em>what kind of place you are standing in</em>.
+      Cynefin sorts situations by how cause and effect behave - and each terrain
+      demands a different first move. Getting the terrain wrong is how good decisions fail.
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ═══ TERRAIN ═══════════════════════════════════════════════════════ -->
+  <section id="terrain">
+    <div class="wrap">
+      <div class="shead"><span class="eyebrow">Terrain</span><span class="rule"></span></div>
+      <h2>The five domains</h2>
+      <p class="sintro">
+        Pick a region on the sheet. The panel beside it gives the domain&rsquo;s
+        decision sequence, the kind of practice that works there, and the way people
+        most often come unstuck.
+      </p>
+
+      <div class="terrain">
+        <!-- ── The map ── -->
+        <div class="mapcard">
+          <svg class="map" viewBox="0 0 540 560" role="group" aria-label="Cynefin terrain map - five selectable domains">
+            <defs>
+              <clipPath id="c-complex"><rect x="24" y="24" width="228" height="228" rx="6"/></clipPath>
+              <clipPath id="c-complicated"><rect x="288" y="24" width="228" height="228" rx="6"/></clipPath>
+              <clipPath id="c-chaotic"><rect x="24" y="288" width="228" height="228" rx="6"/></clipPath>
+              <clipPath id="c-clear"><rect x="288" y="288" width="228" height="228" rx="6"/></clipPath>
+            </defs>
+
+            <!-- graticule -->
+            <g class="graticule">
+              <path d="M0 80H540M0 160H540M0 240H540M0 320H540M0 400H540M0 480H540"/>
+              <path d="M80 0V560M160 0V560M240 0V560M320 0V560M400 0V560M480 0V560"/>
+            </g>
+            <rect class="frame" x="8" y="8" width="524" height="524" rx="3"/>
+
+            <!-- COMPLEX -->
+            <g class="dom" data-domain="complex" tabindex="0" role="button" aria-pressed="false" aria-label="Complex domain">
+              <rect class="plate" x="24" y="24" width="228" height="228" rx="6"/>
+              <g class="contour" clip-path="url(#c-complex)">
+                <ellipse cx="150" cy="150" rx="30" ry="24" transform="rotate(-18 150 150)"/>
+                <ellipse cx="142" cy="146" rx="58" ry="44" transform="rotate(-12 142 146)"/>
+                <ellipse cx="132" cy="152" rx="88" ry="66" transform="rotate(-6 132 152)"/>
+                <ellipse cx="120" cy="146" rx="122" ry="92" transform="rotate(4 120 146)"/>
+                <ellipse cx="196" cy="86" rx="22" ry="15" transform="rotate(24 196 86)"/>
+              </g>
+              <text class="dname" x="44" y="58">Complex</text>
+              <text class="dtriad" x="44" y="78">probe &middot; sense &middot; respond</text>
+              <text class="dprac" x="44" y="234">emergent practice</text>
+            </g>
+
+            <!-- COMPLICATED -->
+            <g class="dom" data-domain="complicated" tabindex="0" role="button" aria-pressed="false" aria-label="Complicated domain">
+              <rect class="plate" x="288" y="24" width="228" height="228" rx="6"/>
+              <g class="contour" clip-path="url(#c-complicated)">
+                <rect x="378" y="114" width="48" height="48" rx="2"/>
+                <rect x="358" y="94" width="88" height="88" rx="2"/>
+                <rect x="338" y="74" width="128" height="128" rx="2"/>
+                <rect x="318" y="54" width="168" height="168" rx="2"/>
+                <path d="M402 114V94M402 182v20M378 138h-20M426 138h20"/>
+              </g>
+              <text class="dname" x="308" y="58">Complicated</text>
+              <text class="dtriad" x="308" y="78">sense &middot; analyze &middot; respond</text>
+              <text class="dprac" x="308" y="234">good practice</text>
+            </g>
+
+            <!-- CHAOTIC -->
+            <g class="dom" data-domain="chaotic" tabindex="0" role="button" aria-pressed="false" aria-label="Chaotic domain">
+              <rect class="plate" x="24" y="288" width="228" height="228" rx="6"/>
+              <g class="contour" clip-path="url(#c-chaotic)">
+                <path d="M42 396l26-22 18 30 24-40 20 26 22-34 26 42 20-28 24 34"/>
+                <path d="M40 442l30 26-16 24 34-12 12 30 26-38 22 26 20-34 28 28"/>
+                <path d="M48 350l22-30 26 16 18-32 30 24 16-28 30 34 22-22"/>
+                <path d="M36 486l34-18 14 26 30-30 24 22"/>
+              </g>
+              <text class="dname" x="44" y="322">Chaotic</text>
+              <text class="dtriad" x="44" y="342">act &middot; sense &middot; respond</text>
+              <text class="dprac" x="44" y="498">novel practice</text>
+            </g>
+
+            <!-- CLEAR -->
+            <g class="dom" data-domain="clear" tabindex="0" role="button" aria-pressed="false" aria-label="Clear domain">
+              <rect class="plate" x="288" y="288" width="228" height="228" rx="6"/>
+              <g class="contour" clip-path="url(#c-clear)">
+                <circle cx="402" cy="402" r="26"/>
+                <circle cx="402" cy="402" r="52"/>
+                <circle cx="402" cy="402" r="78"/>
+                <circle cx="402" cy="402" r="104"/>
+              </g>
+              <text class="dname" x="308" y="322">Clear</text>
+              <text class="dtriad" x="308" y="342">sense &middot; categorize &middot; respond</text>
+              <text class="dprac" x="308" y="498">best practice</text>
+            </g>
+
+            <!-- THE CLIFF: hachured boundary between Clear and Chaotic -->
+            <g aria-hidden="true">
+              <path class="cliff" d="M270 292V512"/>
+              <g class="cliff-tick">
+                <path d="M270 300h-11M270 316h-13M270 332h-10M270 348h-13M270 364h-11M270 380h-13M270 396h-10M270 412h-13M270 428h-11M270 444h-13M270 460h-10M270 476h-13M270 492h-11M270 508h-12"/>
+              </g>
+              <text class="cliff-label" x="266" y="546" text-anchor="middle">The cliff</text>
+            </g>
+
+            <!-- APORIA -->
+            <g class="dom" data-domain="aporia" tabindex="0" role="button" aria-pressed="false" aria-label="Aporia, the central domain of not knowing">
+              <!-- Half-diagonal 58, not 44: this was sized for the 6-character label
+                   "Aporia", and merge.js renames it to the 9-character "Confusion",
+                   which overflowed the shape. At the text baseline the diamond is now
+                   ~106px wide against a ~83px label. Overlapping the four corners is
+                   correct here: Confusion sits over all of them. -->
+              <path class="plate" d="M270 212l58 58-58 58-58-58z"/>
+              <g class="contour" clip-path="none">
+                <path d="M270 236l34 34-34 34-34-34z"/>
+                <path d="M270 249l21 21-21 21-21-21z"/>
+              </g>
+              <text class="dname" x="270" y="275" text-anchor="middle" style="font-size:12.5px;letter-spacing:.14em;">Aporia</text>
+            </g>
+          </svg>
+
+          <div class="legend">
+            <svg width="34" height="16" aria-hidden="true" viewBox="0 0 34 16">
+              <path d="M17 1v14" stroke="var(--h-chaotic)" stroke-width="1.6" fill="none"/>
+              <path d="M17 3H8M17 7H6M17 11H9M17 14H7" stroke="var(--h-chaotic)" stroke-width="1.2" opacity=".75" fill="none"/>
+            </svg>
+            <span>
+              Hachures mark the only catastrophic edge on the sheet. Every other boundary
+              is a slope you can walk back up; the Clear&nbsp;/&nbsp;Chaotic boundary is a fall.
+            </span>
+          </div>
+        </div>
+
+        <!-- ── The panel ── -->
+        <div>
+          <div class="tabs" role="group" aria-label="Choose a domain">
+            <button class="tab" type="button" data-domain="clear" aria-pressed="false"><span class="dot"></span>Clear</button>
+            <button class="tab" type="button" data-domain="complicated" aria-pressed="false"><span class="dot"></span>Complicated</button>
+            <button class="tab" type="button" data-domain="complex" aria-pressed="false"><span class="dot"></span>Complex</button>
+            <button class="tab" type="button" data-domain="chaotic" aria-pressed="false"><span class="dot"></span>Chaotic</button>
+            <button class="tab" type="button" data-domain="aporia" aria-pressed="false"><span class="dot"></span>Aporia</button>
+          </div>
+
+          <article class="panel" id="panel" data-domain="clear" aria-live="polite">
+            <span class="eyebrow" id="p-eyebrow">Selected terrain</span>
+            <h3 id="p-name">Clear</h3>
+            <div class="aka" id="p-aka"></div>
+            <p class="lead" id="p-lead"></p>
+
+            <div class="stack" id="stack">
+              <div class="inset" data-for="clear">
+<pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Sense"] --> B["Categorize"] --> C["Respond"]
+  C -.-> D["Best practice"]
+  classDef s fill:#F7F4EA,stroke:#A07717,stroke-width:1.6px,color:#1B211E
+  classDef o fill:#EDE0BF,stroke:#A07717,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+  class D o
+</pre>
+              </div>
+              <div class="inset" data-for="complicated">
+<pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Sense"] --> B["Analyze"] --> C["Respond"]
+  C -.-> D["Good practice"]
+  classDef s fill:#EEF3F6,stroke:#2F6485,stroke-width:1.6px,color:#1B211E
+  classDef o fill:#D5E4EE,stroke:#2F6485,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+  class D o
+</pre>
+              </div>
+              <div class="inset" data-for="complex">
+<pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Probe"] --> B["Sense"] --> C["Respond"]
+  C -.-> D["Emergent practice"]
+  C -.->|"amplify or dampen"| A
+  classDef s fill:#EBF4F0,stroke:#2C7A5D,stroke-width:1.6px,color:#1B211E
+  classDef o fill:#CDE6DC,stroke:#2C7A5D,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+  class D o
+</pre>
+              </div>
+              <div class="inset" data-for="chaotic">
+<pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Act"] --> B["Sense"] --> C["Respond"]
+  C -.-> D["Novel practice"]
+  classDef s fill:#F8EDE9,stroke:#A63F26,stroke-width:1.6px,color:#1B211E
+  classDef o fill:#EFD3C9,stroke:#A63F26,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+  class D o
+</pre>
+              </div>
+              <div class="inset" data-for="aporia">
+<pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Break it<br/>into parts"] --> B["Place each part"] --> C["Act per domain"]
+  classDef s fill:#F0EEF5,stroke:#5B5578,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+</pre>
+              </div>
+            </div>
+            <div class="inset-cap">Decision sequence</div>
+
+            <dl class="facts">
+              <dt>Cause &amp; effect</dt><dd id="p-cause"></dd>
+              <dt>Constraints</dt><dd id="p-constraints"></dd>
+              <dt>Your job</dt><dd id="p-job"></dd>
+            </dl>
+
+            <div class="watch">
+              <span class="eyebrow">Where it goes wrong</span>
+              <ul id="p-watch"></ul>
+            </div>
+
+            <div class="here">
+              <b>You are probably here when</b>
+              <span id="p-here"></span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MOVEMENT ══════════════════════════════════════════════════════ -->
+  <section id="movement">
+    <div class="wrap">
+      <div class="shead"><span class="eyebrow">Movement</span><span class="rule"></span></div>
+      <h2>Nothing stays in its domain</h2>
+      <p class="sintro">
+        The value of the framework is not the five boxes - it is the traffic between
+        them. Some crossings you engineer on purpose. One happens to you.
+      </p>
+
+      <div class="two">
+        <div class="inset" style="align-self:start;">
+<pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"13px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart TD
+  CH["Chaotic"] -->|"stabilize first"| CX["Complex"]
+  CX -->|"patterns hold, codify"| CD["Complicated"]
+  CD -->|"habit hardens"| CL["Clear"]
+  CL -.->|"complacency: the fall"| CH
+  CL -->|"the rule stops working"| CD
+  CX -.->|"deliberate shallow dive"| CH
+  AP(["Aporia"]) -.-> CX
+  AP -.-> CD
+  classDef ch fill:#F8EDE9,stroke:#A63F26,stroke-width:1.6px,color:#1B211E
+  classDef cx fill:#EBF4F0,stroke:#2C7A5D,stroke-width:1.6px,color:#1B211E
+  classDef cd fill:#EEF3F6,stroke:#2F6485,stroke-width:1.6px,color:#1B211E
+  classDef cl fill:#F7F4EA,stroke:#A07717,stroke-width:1.6px,color:#1B211E
+  classDef ap fill:#F0EEF5,stroke:#5B5578,stroke-width:1.6px,color:#1B211E
+  class CH ch
+  class CX cx
+  class CD cd
+  class CL cl
+  class AP ap
+</pre>
+        </div>
+
+        <ul class="moves">
+          <li style="--mvc:var(--h-chaotic)">
+            <span class="mv">The cliff - Clear to Chaotic</span>
+            <p>The only crossing with no gradient. Rules that worked for years stop working all at once, and
+            because nobody was watching for it, <b>there is no shallow water to stand in</b>. Recovery is
+            expensive and slow. Complacency is the mechanism.</p>
+          </li>
+          <li style="--mvc:var(--h-complex)">
+            <span class="mv">The recovery - Chaotic to Complex</span>
+            <p>Out of chaos you go to <b>Complex, not to Clear</b>. Act to stabilize, then start probing.
+            Leaders who try to jump straight back to best practice re-create the conditions of the fall.</p>
+          </li>
+          <li style="--mvc:var(--h-complicated)">
+            <span class="mv">Codification - Complex to Complicated</span>
+            <p>When probes keep producing the same pattern, the pattern becomes analysable. This is where
+            <b>exaptation</b> lives too: something built for one purpose gets radically repurposed under
+            constraint, and the new use is knowable even though its origin was not.</p>
+          </li>
+          <li style="--mvc:var(--h-clear)">
+            <span class="mv">Entrainment - Complicated to Clear</span>
+            <p>Expert judgment calcifies into &ldquo;the way we do it.&rdquo; Useful, and quietly dangerous:
+            <b>entrained thinking is what stops you seeing the edge approach</b>.</p>
+          </li>
+          <li style="--mvc:var(--h-chaotic)">
+            <span class="mv">The shallow dive - deliberate chaos</span>
+            <p>Chaos is the cheapest place to be novel, because no established practice is defending itself.
+            You can enter it <b>on purpose and briefly</b> to break entrained thinking - then pull back
+            into Complex before the turbulence costs you.</p>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ORIENTATION ═══════════════════════════════════════════════════ -->
+  <section id="orientation">
+    <div class="wrap">
+      <div class="shead"><span class="eyebrow">Orientation</span><span class="rule"></span></div>
+      <h2>Which terrain are you standing on?</h2>
+      <p class="sintro">
+        Two questions. The first sorts you; the second checks whether you flattered yourself.
+        Answer for one specific decision in front of you right now - not for the whole project.
+      </p>
+
+      <div class="two">
+        <div class="quiz" id="quiz">
+          <div class="steps" id="q-steps">Question 1 of 2</div>
+          <p class="q" id="q-text">Loading&hellip;</p>
+          <div class="opts" id="q-opts"></div>
+          <div class="qbtns" id="q-btns"></div>
+        </div>
+
+        <div>
+          <div class="inset">
+<pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"13px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart TD
+  Q{"How does cause<br/>and effect behave?"}
+  Q -->|"obvious to everyone"| CL["Clear"]
+  Q -->|"an expert can work it out"| CD["Complicated"]
+  Q -->|"only visible in hindsight"| CX["Complex"]
+  Q -->|"no time to even ask"| CH["Chaotic"]
+  Q -->|"I honestly cannot tell"| AP(["Aporia"])
+  AP -.->|"split the situation up<br/>and ask again per part"| Q
+  classDef ch fill:#F8EDE9,stroke:#A63F26,stroke-width:1.6px,color:#1B211E
+  classDef cx fill:#EBF4F0,stroke:#2C7A5D,stroke-width:1.6px,color:#1B211E
+  classDef cd fill:#EEF3F6,stroke:#2F6485,stroke-width:1.6px,color:#1B211E
+  classDef cl fill:#F7F4EA,stroke:#A07717,stroke-width:1.6px,color:#1B211E
+  classDef ap fill:#F0EEF5,stroke:#5B5578,stroke-width:1.6px,color:#1B211E
+  class CH ch
+  class CX cx
+  class CD cd
+  class CL cl
+  class AP ap
+</pre>
+          </div>
+          <div class="inset-cap">The sorting question</div>
+          <p style="margin-top:22px;color:var(--ink-2);font-size:.97rem;">
+            The center is not one state but two. <b>Aporia</b> is the active one: you know you do
+            not know, and you hold the question open on purpose. <b>Confusion</b> is the passive
+            one: you have not noticed, so you drift toward whichever domain you are most
+            comfortable in. Only the second is a failure state, and the way out of both is the
+            same: stop treating the mess as one thing, break it into parts, and place each part
+            separately.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CAUTIONS ══════════════════════════════════════════════════════ -->
+  <section id="cautions">
+    <div class="wrap">
+      <div class="shead"><span class="eyebrow">Cautions</span><span class="rule"></span></div>
+      <h2>How the framework gets misused</h2>
+      <p class="sintro">
+        Most of these come from Snowden himself, usually with more force than this.
+      </p>
+
+      <div class="cautions">
+        <div class="caution">
+          <span class="eyebrow">Category error</span>
+          <h4>It sorts your relationship to a situation, not the situation</h4>
+          <p>&ldquo;Is deployment complicated or complex?&rdquo; is the wrong question. The same deployment
+          is Clear to the team that has done it two hundred times and Complex to the team meeting the
+          system for the first time. The domain describes you and it, together, today.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Not a 2&times;2</span>
+          <h4>The boundaries are not symmetric</h4>
+          <p>The neat quadrant drawing - including the one above - misleads. Four of the
+          boundaries are gradients you cross gradually and can reverse. The Clear&nbsp;/&nbsp;Chaotic
+          boundary is a cliff. Treating them as equivalent edges is the single most common reading error.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Granularity</span>
+          <h4>Nothing real sits in one domain</h4>
+          <p>A program of work is never &ldquo;a complex project.&rdquo; It is payroll (Clear), a
+          migration (Complicated), an adoption question (Complex), and one incident that is on fire
+          (Chaotic). Assigning a single domain to a whole initiative throws away the entire point.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Vocabulary drift</span>
+          <h4>&ldquo;Simple&rdquo; was renamed for a reason</h4>
+          <p>The first domain went Simple &rarr; Obvious &rarr; Clear, because calling it simple invited
+          contempt for the people working in it and blinded everyone to how quickly it can collapse.
+          The center likewise stopped being plain Disorder and split in two: <b>aporia</b>, the active
+          state where you know you do not know, and <b>confusion</b>, the passive one where you have
+          not noticed. Snowden notates them A and C. They are not synonyms, and only confusion is a
+          failure mode.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Best practice</span>
+          <h4>Best practice is a Clear-domain instrument</h4>
+          <p>Outside Clear it is at best a starting hypothesis. Importing a playbook that worked
+          somewhere else into a Complex situation is how organizations spend a year proving that
+          their context is different.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Default domain</span>
+          <h4>Everyone has a preferred terrain</h4>
+          <p>Under Aporia, people do not choose a domain - they fall back to the one they are
+          most comfortable acting in. Analysts see Complicated everywhere; firefighters see Chaotic.
+          Knowing your own default is most of the defense against it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="cite">
+      <span class="eyebrow">Provenance</span>
+      <p style="margin-top:.8em;">
+        Cynefin was developed by <b>Dave Snowden</b> at IBM Global Services from 1999, and set out
+        with Cynthia Kurtz in &ldquo;The new dynamics of strategy: sense-making in a complex and
+        complicated world&rdquo; (<i>IBM Systems Journal</i>, 2003). It reached a general management
+        audience through Snowden and Mary Boone&rsquo;s &ldquo;A Leader&rsquo;s Framework for Decision
+        Making&rdquo; (<i>Harvard Business Review</i>, November 2007).
+      </p>
+      <p>
+        The framework has kept moving since: the first domain was renamed twice, the center split
+        into aporia and confusion, and later work added <i>liminal</i> zones for the deliberate,
+        managed transitions between domains. This sheet describes the framework as commonly taught today; it is a
+        secondary summary, not a Cynefin&nbsp;Co. publication.
+      </p>
+    </div>
+    <div class="colophon">
+      Diagrams rendered with Mermaid. Terrain map drawn in SVG, with cartographic hachures
+      marking the Clear&nbsp;/&nbsp;Chaotic cliff.
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  const DOMAINS = {
+    clear: {
+      name: "Clear",
+      aka: "formerly Simple, then Obvious",
+      lead: "Cause and effect are visible to everyone involved, and everyone would agree on them. There is a right answer and it is not in dispute.",
+      cause: "Obvious - <b>self&#8209;evident</b> to any reasonable observer",
+      constraints: "Fixed and rigid. The process is the point.",
+      job: "Categorize correctly, then apply the known answer. Resist the urge to be clever.",
+      watch: [
+        "<b>Oversimplification.</b> Classifying something as Clear because you want it to be, then applying a checklist to a situation that had a twist in it.",
+        "<b>Complacency.</b> Clear is the only domain with a cliff on its border. Success here quietly stops people watching for the conditions that made it work.",
+        "<b>Contempt for the work.</b> Calling it &ldquo;simple&rdquo; devalues the people who keep it running and hides how much judgment is actually in there."
+      ],
+      here: "Order processing, standard credit checks, a well-drilled pre-flight checklist, a support ticket that matches a known article exactly."
+    },
+    complicated: {
+      name: "Complicated",
+      aka: "the domain of experts",
+      lead: "Cause and effect are knowable, but not by looking. Analysis or expertise is required, and there is usually more than one defensible right answer.",
+      cause: "Knowable through <b>analysis</b>, with time and expertise",
+      constraints: "Governing constraints - rules that bound how the system behaves",
+      job: "Get the right experts, hear more than one of them, then choose. Analysis has to end in a decision.",
+      watch: [
+        "<b>Expert entrainment.</b> Experts are the reason this domain works and the reason it fails; deep experience makes novel solutions literally hard to see.",
+        "<b>Analysis paralysis.</b> Because a right answer exists, teams keep looking for it past the point where the cost of delay exceeds the cost of being slightly wrong.",
+        "<b>Dismissing the non-expert.</b> The outsider&rsquo;s naive question is the standard antidote to entrainment, and it is the one most often talked over."
+      ],
+      here: "Diagnosing an intermittent fault, structural engineering, tax treatment of an unusual transaction, tuning a database that is behaving badly."
+    },
+    complex: {
+      name: "Complex",
+      aka: "where most interesting work lives",
+      lead: "Cause and effect are only coherent in retrospect. The system changes as you act in it, so you cannot analyze your way to an answer in advance - you have to interact with it to find out what it does.",
+      cause: "Visible <b>only in hindsight</b>; the act of intervening changes it",
+      constraints: "Enabling constraints - boundaries loose enough for patterns to emerge",
+      job: "Run several safe&#8209;to&#8209;fail probes in parallel, then amplify what works and dampen what does not.",
+      watch: [
+        "<b>Reaching for best practice.</b> The impulse to import a playbook is strongest exactly where playbooks do least good.",
+        "<b>Probes that are not safe to fail.</b> An experiment you cannot afford to lose is not an experiment; it is a bet with a research label on it.",
+        "<b>Premature order.</b> Demanding a plan and a date too early collapses the domain into a fake Complicated one, and the plan then fails on contact.",
+        "<b>Serial probing.</b> One experiment at a time surfaces one pattern at a time, slowly. Parallel probes are the method, not a luxury."
+      ],
+      here: "Culture change, entering a new market, product-market fit, adoption of a tool nobody asked for, any situation where people react to your intervention."
+    },
+    chaotic: {
+      name: "Chaotic",
+      aka: "turbulence, not merely difficulty",
+      lead: "There is no discernible relationship between cause and effect, and no time to look for one. Searching for the right answer is itself the wrong move; the situation needs a boundary put around it now.",
+      cause: "<b>No detectable relationship</b> - and no time to establish one",
+      constraints: "Absent. Nothing is holding the system in shape.",
+      job: "Act to stabilize, then sense what changed, then respond. Take the decision; do not seek consensus.",
+      watch: [
+        "<b>Staying too long.</b> Command works here and works nowhere else, and it is addictive - leaders who are good in a crisis have an incentive not to leave one.",
+        "<b>Exiting to the wrong domain.</b> The way out is into Complex, not straight back to Clear. Jumping to best practice rebuilds the conditions for the next fall.",
+        "<b>Missing the window.</b> Chaos is where novelty is cheapest, because no established practice is there defending itself. Crises are usually wasted."
+      ],
+      here: "A live outage with an unknown cause, the first hours of a genuine emergency, a market event nobody modeled, the moment a fundamental assumption breaks in public."
+    },
+    aporia: {
+      name: "Aporia",
+      aka: "formerly Disorder - the central domain",
+      lead: "You do not know which domain you are in, and this is the most common state there is. It has two modes. <b>Aporia</b> is the active one: you know you do not know, and you hold the question open on purpose - the productive puzzlement that comes before understanding. <b>Confusion</b> is the passive one: you have not noticed, so you drift. Only the second is a failure state.",
+      cause: "<b>Undetermined</b> - you have not yet established how it behaves",
+      constraints: "Unknown, which is the actual finding",
+      job: "Break the situation into parts and place each part in a domain. Say out loud that you do not yet know.",
+      watch: [
+        "<b>Silent default.</b> Under uncertainty people do not choose a domain, they retreat to their favorite one - analysts to Complicated, operators to Clear, firefighters to Chaotic.",
+        "<b>Treating the mess as one thing.</b> A situation that resists placement is almost always several situations wearing one name.",
+        "<b>Mistaking it for chaos.</b> Aporia is not turbulence. Nothing is necessarily on fire; you simply have not worked out the terrain yet, and you may well have time to."
+      ],
+      here: "Most first meetings about a problem, most incident reviews before the timeline is built, and nearly every situation where two smart people are confidently disagreeing about what kind of problem it is."
+    }
+  };
+
+  const panel  = document.getElementById("panel");
+  const stack  = document.getElementById("stack");
+  const groups = Array.prototype.slice.call(document.querySelectorAll(".dom"));
+  const tabs   = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  const insets = Array.prototype.slice.call(stack.querySelectorAll(".inset"));
+
+  function select(key){
+    const d = DOMAINS[key];
+    if(!d) return;
+
+    panel.setAttribute("data-domain", key);
+    document.getElementById("p-name").textContent = d.name;
+    document.getElementById("p-aka").textContent  = d.aka;
+    document.getElementById("p-lead").innerHTML   = d.lead;
+    document.getElementById("p-cause").innerHTML  = d.cause;
+    document.getElementById("p-constraints").textContent = d.constraints;
+    document.getElementById("p-job").innerHTML    = d.job;
+    document.getElementById("p-here").textContent = d.here;
+    document.getElementById("p-watch").innerHTML  =
+      d.watch.map(function(w){ return "<li>" + w + "</li>"; }).join("");
+
+    insets.forEach(function(el){
+      el.setAttribute("data-active", el.getAttribute("data-for") === key ? "true" : "false");
+    });
+    groups.forEach(function(g){
+      g.setAttribute("aria-pressed", g.getAttribute("data-domain") === key ? "true" : "false");
+    });
+    tabs.forEach(function(t){
+      t.setAttribute("aria-pressed", t.getAttribute("data-domain") === key ? "true" : "false");
+    });
+  }
+
+  groups.forEach(function(g){
+    const key = g.getAttribute("data-domain");
+    g.addEventListener("click", function(){ select(key); });
+    g.addEventListener("keydown", function(e){
+      if(e.key === "Enter" || e.key === " " || e.key === "Spacebar"){
+        e.preventDefault();
+        select(key);
+      }
+    });
+  });
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){ select(t.getAttribute("data-domain")); });
+  });
+
+  select("clear");
+
+  /* ── Orientation quiz ─────────────────────────────────────────────── */
+
+  const Q1 = {
+    text: "For the decision actually in front of you - how does cause and effect behave?",
+    opts: [
+      { t: "Everyone involved can see the cause, and would agree on it.", to: "clear" },
+      { t: "Nobody can see it now, but the right expert could work it out.", to: "complicated" },
+      { t: "It will only make sense looking backwards, once we’ve acted.", to: "complex" },
+      { t: "Things are moving too fast to even ask the question.", to: "chaotic" },
+      { t: "I genuinely can’t tell which of these is true.", to: "aporia" }
+    ]
+  };
+
+  const Q2 = {
+    clear: {
+      text: "Has this exact situation ever surprised you - even once?",
+      opts: [
+        { t: "No. It has behaved the same way every single time.", to: "clear", note:
+          "Then act. Categorize it and apply the known answer. Keep one eye on the edge: Clear is the only domain you can fall out of without warning." },
+        { t: "Yes, at least once it did something we didn’t expect.", to: "complicated", note:
+          "Then it isn’t Clear. A single genuine surprise means the causal chain has a piece in it you haven’t mapped - treat it as Complicated and get someone to actually analyze it before you standardize." }
+      ]
+    },
+    complicated: {
+      text: "Put the two best-qualified people in a room. Do they agree on the right answer?",
+      opts: [
+        { t: "Broadly, yes - they’d argue about method, not about outcome.", to: "complicated", note:
+          "Then it is Complicated. Commission the analysis, but set the point at which analysis stops and a decision gets made - and let one non-expert ask the naive question before you commit." },
+        { t: "No - they’d reach genuinely different conclusions.", to: "complex", note:
+          "Expert disagreement of that kind usually means there is no knowable right answer yet, only competing hypotheses. Treat it as Complex: run their positions as parallel safe-to-fail probes rather than picking the more senior expert." }
+      ]
+    },
+    complex: {
+      text: "Can you afford to run a small experiment and have it fail?",
+      opts: [
+        { t: "Yes - we could try two or three things and survive all of them.", to: "complex", note:
+          "Then probe. Run them in parallel, not in sequence, and decide in advance what you’ll amplify and what you’ll dampen. Emergent practice is the output; a plan is not." },
+        { t: "No - a failure right now would do real damage.", to: "chaotic", note:
+          "Complexity you cannot afford to probe is functionally Chaotic. Act first to build enough stability that a failed experiment becomes survivable - then come back and probe from there." }
+      ]
+    },
+    chaotic: {
+      text: "Is anything currently holding the situation in shape - any constraint still doing work?",
+      opts: [
+        { t: "No. Nothing is holding. It’s genuinely loose.", to: "chaotic", note:
+          "Act now, then sense, then respond. Take the decision alone; consensus is a Complicated-domain luxury. And plan your exit into Complex - not back to the playbook that failed." },
+        { t: "Some things still hold - it’s bad, but not unbounded.", to: "complex", note:
+          "That’s pressure, not chaos, and the distinction matters: you still have room to probe. Don’t reach for command authority you don’t need - it is easy to acquire and hard to give back." }
+      ]
+    },
+    aporia: {
+      text: "Can you name two parts of this situation that behave differently from each other?",
+      opts: [
+        { t: "Yes, now that I look - they’re not the same problem.", to: "aporia", note:
+          "That is the whole instruction. Split them, run this sheet against each part separately, and act per part. You will usually find you were about to apply one domain’s method to four different terrains." },
+        { t: "No - it really does seem like one undivided thing.", to: "aporia", note:
+          "Then stay in aporia deliberately and say so out loud. The risk isn’t not knowing; it’s that under uncertainty people quietly retreat to their favorite domain. Gather more before you place it." }
+      ]
+    }
+  };
+
+  const HUE = {
+    clear: "var(--h-clear)", complicated: "var(--h-complicated)",
+    complex: "var(--h-complex)", chaotic: "var(--h-chaotic)", aporia: "var(--h-aporia)"
+  };
+
+  const qSteps = document.getElementById("q-steps");
+  const qText  = document.getElementById("q-text");
+  const qOpts  = document.getElementById("q-opts");
+  const qBtns  = document.getElementById("q-btns");
+  const quiz   = document.getElementById("quiz");
+
+  function renderQ1(){
+    quiz.classList.remove("verdict");
+    quiz.style.removeProperty("--vh");
+    qSteps.textContent = "Question 1 of 2";
+    qText.innerHTML = Q1.text;
+    qText.className = "q";
+    qOpts.innerHTML = "";
+    qBtns.innerHTML = "";
+    Q1.opts.forEach(function(o){
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "opt";
+      b.textContent = o.t;
+      b.addEventListener("click", function(){ renderQ2(o.to); });
+      qOpts.appendChild(b);
+    });
+  }
+
+  function renderQ2(first){
+    const q = Q2[first];
+    quiz.style.setProperty("--vh", HUE[first]);
+    qSteps.textContent = "Question 2 of 2";
+    qText.innerHTML = q.text;
+    qOpts.innerHTML = "";
+    q.opts.forEach(function(o){
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "opt";
+      b.style.borderLeftColor = HUE[o.to];
+      b.textContent = o.t;
+      b.addEventListener("click", function(){ renderVerdict(o.to, o.note); });
+      qOpts.appendChild(b);
+    });
+    qBtns.innerHTML = "";
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "btn ghost";
+    back.textContent = "Back";
+    back.addEventListener("click", renderQ1);
+    qBtns.appendChild(back);
+  }
+
+  function renderVerdict(key, note){
+    const d = DOMAINS[key];
+    quiz.classList.add("verdict");
+    quiz.style.setProperty("--vh", HUE[key]);
+    qSteps.textContent = "Reading";
+    qText.className = "";
+    qText.innerHTML =
+      '<span class="eyebrow vlabel">You are standing on</span>' +
+      '<h4>' + d.name + '</h4>' +
+      '<p>' + d.lead + '</p>' +
+      '<div class="note">' + note + '</div>';
+    qOpts.innerHTML = "";
+    qBtns.innerHTML = "";
+
+    const show = document.createElement("button");
+    show.type = "button";
+    show.className = "btn";
+    show.textContent = "Open " + d.name + " on the map";
+    show.addEventListener("click", function(){
+      select(key);
+      document.getElementById("terrain").scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start"
+      });
+    });
+
+    const again = document.createElement("button");
+    again.type = "button";
+    again.className = "btn ghost";
+    again.textContent = "Start over";
+    again.addEventListener("click", renderQ1);
+
+    qBtns.appendChild(show);
+    qBtns.appendChild(again);
+  }
+
+  renderQ1();
+})();
+</script>

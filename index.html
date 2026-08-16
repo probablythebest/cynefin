@@ -1,0 +1,2289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cynefin</title>
+<meta name="description" content="Sort your own work onto a Cynefin board, or learn the framework from an interactive field sheet.">
+<style>
+
+  /* ===== Shared shell =================================================== */
+  :root{
+    color-scheme: light dark;
+    --paper:#F0F1EC; --sheet:#F8F9F5; --sunk:#E7E9E2;
+    --ink:#1B211E; --ink-2:#4E5A55; --muted:#7C8883; --rule:#CDD3CB;
+    --plate:#E6E9E1; --plate-2:#DDE1D8;
+    --shadow:0 1px 0 rgba(27,33,30,.05), 0 10px 24px -18px rgba(27,33,30,.5);
+    --inset-dim:none;
+    /* meaning-led domain palette: clear=green complicated=yellow
+       complex=orange chaotic=red confusion=grey */
+    --h-clear:#3B7A32; --h-complicated:#806E0C; --h-complex:#AD5510;
+    --h-chaotic:#AF2723; --h-confusion:#5E6A64; --h-unplaced:#8D9791;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Hoefler Text",Georgia,serif;
+    --sans:"Avenir Next Condensed","Roboto Condensed","Helvetica Neue Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif;
+    --w:1120px; --prose:68ch;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#141815; --sheet:#1C221E; --sunk:#101413;
+      --ink:#E9ECE5; --ink-2:#AAB5AF; --muted:#7F8B85; --rule:#2C3531;
+      --plate:#222925; --plate-2:#1D2420;
+      --shadow:0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
+      --inset-dim:brightness(.82) saturate(.95);
+      --h-clear:#63BE55; --h-complicated:#DCC341; --h-complex:#E8913F;
+      --h-chaotic:#E85C52; --h-confusion:#A6B0AA; --h-unplaced:#79837E;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#141815; --sheet:#1C221E; --sunk:#101413;
+    --ink:#E9ECE5; --ink-2:#AAB5AF; --muted:#7F8B85; --rule:#2C3531;
+    --plate:#222925; --plate-2:#1D2420;
+    --shadow:0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
+    --inset-dim:brightness(.82) saturate(.95);
+    --h-clear:#63BE55; --h-complicated:#DCC341; --h-complex:#E8913F;
+    --h-chaotic:#E85C52; --h-confusion:#A6B0AA; --h-unplaced:#79837E;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--serif); font-size:16px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:clip;   /* clip, not hidden: hidden would move scrolling to body */
+  }
+  button,input,select{ font:inherit; color:inherit; }
+  :focus-visible{ outline:2px solid var(--ink); outline-offset:2px; border-radius:2px; }
+
+  /* the explainer was authored at its own reading size */
+  #learn{ font-size:17px; line-height:1.62; }
+  [hidden]{ display:none !important; }
+
+  /* ---- top bar shared by both tabs ---- */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    background:var(--sheet); border-bottom:1px solid var(--rule);
+    display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center;
+    padding:11px clamp(12px,2.2vw,22px);
+  }
+  .topbar .brand{
+    font-size:1.28rem; margin:0; font-weight:400; letter-spacing:-.01em; white-space:nowrap;
+  }
+  .topbar .spacer{ flex:1 1 0; min-width:0; }
+  .seg{ display:flex; border:1px solid var(--rule); border-radius:2px; overflow:hidden; flex:none; }
+  .seg button{
+    font-family:var(--sans); font-size:.7rem; letter-spacing:.16em; text-transform:uppercase;
+    font-weight:600; padding:8px 18px; cursor:pointer;
+    background:transparent; color:var(--muted); border:0;
+    transition:background .16s, color .16s;
+  }
+  .seg button + button{ border-left:1px solid var(--rule); }
+  .seg button:hover{ color:var(--ink); }
+  .seg button[aria-selected="true"]{ background:var(--ink); color:var(--paper); }
+  .buildonly{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; flex:1 1 260px; min-width:0; justify-content:flex-end; }
+  #boardTitle{
+    background:var(--paper); border:1px solid var(--rule); border-radius:2px;
+    padding:7px 11px; font-size:.95rem; min-width:0; flex:1 1 340px; max-width:680px;
+  }
+  #boardTitle::placeholder{ color:var(--muted); }
+  .btn{
+    font-family:var(--sans); font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600;
+    padding:8px 13px; border-radius:2px; cursor:pointer; white-space:nowrap;
+    background:transparent; color:var(--ink-2); border:1px solid var(--rule);
+    transition:color .16s, border-color .16s, background .16s, opacity .16s;
+  }
+  .btn:hover{ color:var(--ink); border-color:var(--ink-2); }
+  .btn.solid{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .btn.solid:hover{ opacity:.84; color:var(--paper); }
+  .btn[disabled]{ opacity:.42; cursor:not-allowed; }
+  /* transient result line for export/import, muted so it never reads as an error
+     colour (the domain palette owns red) */
+  .io-note{ flex:1 1 100%; font-size:.84rem; font-style:italic; color:var(--ink-2); }
+  .io-note[data-bad="true"]{ color:var(--ink); font-weight:600; }
+  .btn[disabled]:hover{ color:var(--ink-2); border-color:var(--rule); }
+
+  /* learn diagrams are rendered from <pre class="mmd-src"> by the bundled mermaid */
+  #learn pre.mmd-src{ display:none; }
+  #learn .mmd{ width:100%; }
+  #learn .mmd svg{ max-width:100%; height:auto; display:block; margin:0 auto; }
+
+  /* Mermaid measures each label with its own font and sizes the box to fit BEFORE
+     the SVG reaches the page. Any page typography applied afterward makes the text
+     outgrow its box and clip. Mermaid emits class="label" of its own, so quarantine
+     both diagram containers from inherited text styling. */
+  #learn .mmd, #build #dia{ font-family:Georgia, "Iowan Old Style", Palatino, serif; }
+  #learn .mmd .label, #learn .mmd .nodeLabel, #learn .mmd .edgeLabel,
+  #learn .mmd text, #learn .mmd tspan, #learn .mmd foreignObject div, #learn .mmd span,
+  #build #dia .label, #build #dia .nodeLabel, #build #dia .edgeLabel,
+  #build #dia text, #build #dia tspan, #build #dia foreignObject div, #build #dia span{
+    text-transform:none !important;
+    letter-spacing:normal !important;
+    font-family:inherit !important;
+  }
+
+  @media (prefers-reduced-motion:reduce){ *{ transition-duration:.001ms !important; animation-duration:.001ms !important; } }
+
+  /* ===== Build pane ===================================================== */
+
+  /* grid and flex children default to min-width:auto, which lets long words
+     force a track wider than the window. Let every panel shrink instead. */
+  #build .app > *,
+  #build .board > *,
+  #build .readout > *,
+  #build .transitions > *,
+  #build .box,
+  #build .zone,
+  #build .card,
+  #build .pane,
+  #build .tally,
+  #build .tlist li,
+  #build .read li{ min-width:0; }
+  #build .lbl{ font-family:var(--sans); font-size:.66rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  #build .num{ font-variant-numeric:tabular-nums; }
+
+  /* -- Top bar ----------------------------------------------- */
+  #build .bar{
+    position:sticky; top:0; z-index:20;
+    background:var(--sheet); border-bottom:1px solid var(--rule);
+    display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center;
+    padding:11px clamp(12px,2.2vw,22px);
+  }
+
+  /* -- Layout ------------------------------------------------ */
+  #build .app{ display:flex; flex-direction:column; gap:18px; padding:clamp(12px,2.2vw,22px); }
+
+  #build .box{ background:var(--sheet); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow); }
+  #build .box > header{ padding:11px 14px; border-bottom:1px solid var(--rule); display:flex; align-items:baseline; gap:10px; }
+  #build .box > header .spacer{ flex:1; }
+  #build .box .body{ padding:14px; }
+
+  /* -- Add form ---------------------------------------------- */
+  #build .add{ display:flex; gap:8px; }
+  #build .add input{ flex:1; min-width:0; background:var(--paper); border:1px solid var(--rule); border-radius:2px; padding:9px 11px; font-size:.95rem; }
+  #build .add input::placeholder{ color:var(--muted); }
+  #build .hint{ font-size:.82rem; color:var(--muted); margin:9px 0 0; line-height:1.45; max-width:78ch; }
+  /* the add row sits on top of the tray inside the Unsorted card; rule them apart */
+  #build #tray{ margin-top:13px; padding-top:13px; border-top:1px solid var(--rule); }
+
+  /* -- Cards ------------------------------------------------- */
+  /* one rule for the unsorted tray and every domain drop zone: cards flow into as
+     many columns as the container can hold, so a full-width tray stays compact. */
+  #build .cards{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+    gap:7px; align-content:start; min-height:10px;
+  }
+  #build .cards .empty{ grid-column:1 / -1; }
+  #build .card{
+    position:relative; display:flex; align-items:flex-start; gap:8px;
+    background:var(--paper); border:1px solid var(--rule);
+    border-left:3px solid var(--dh,var(--rule));
+    border-radius:2px; padding:8px 9px 8px 10px; cursor:grab;
+    font-size:.93rem; line-height:1.35;
+    transition:box-shadow .14s, opacity .14s;
+  }
+  #build .card:hover{ box-shadow:0 3px 12px -6px rgba(0,0,0,.4); }
+  #build .card:active{ cursor:grabbing; }
+  #build .card.dragging{ opacity:.35; }
+  #build .card[aria-selected="true"]{ box-shadow:0 0 0 2px var(--ink); }
+  #build .card .ctext{ flex:1; min-width:0; overflow-wrap:anywhere; }
+  #build .card input.edit{ flex:1; min-width:0; background:var(--sheet); border:1px solid var(--ink-2); border-radius:2px; padding:2px 5px; font-size:.93rem; font-family:var(--serif); }
+  #build .card .kill{
+    flex:none; background:none; border:0; cursor:pointer; padding:0 2px; line-height:1;
+    color:var(--muted); font-size:1.05rem; opacity:0; transition:opacity .14s, color .14s;
+  }
+  #build .card:hover .kill,
+  #build .card:focus-within .kill{ opacity:1; }
+  #build .card .kill:hover{ color:var(--h-chaotic); }
+  #build .empty{ font-size:.85rem; color:var(--muted); font-style:italic; padding:6px 2px; }
+
+  /* -- Board ------------------------------------------------- */
+  /* the four domains around a center column, so Confusion sits where it does on
+     the diagram: in the middle, between all four. */
+  #build .board{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(150px,.62fr) minmax(0,1fr);
+    gap:16px;
+  }
+  #build .zone[data-domain="complex"]{ grid-column:1; grid-row:1; }
+  #build .zone[data-domain="complicated"]{ grid-column:3; grid-row:1; }
+  #build .zone[data-domain="chaotic"]{ grid-column:1; grid-row:2; }
+  #build .zone[data-domain="clear"]{ grid-column:3; grid-row:2; }
+  #build .zone[data-domain="confusion"]{ grid-column:2; grid-row:1 / span 2; }
+  @media (max-width:860px){
+    #build .board{ grid-template-columns:minmax(0,1fr); }
+    #build .board .zone{ grid-column:1; grid-row:auto; }
+  }
+  #build .zone{
+    position:relative; background:var(--sheet); border:1px solid var(--rule);
+    border-top:3px solid var(--dh); border-radius:3px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; min-height:186px;
+    transition:background .16s, border-color .16s;
+  }
+  #build .zone > header{ padding:11px 13px 9px; border-bottom:1px solid var(--rule); }
+  #build .zone .zname{
+    font-family:var(--sans); font-size:.78rem; letter-spacing:.16em; text-transform:uppercase;
+    font-weight:600; color:var(--dh); display:flex; align-items:baseline; gap:9px;
+  }
+  #build .zone .zname .count{ margin-left:auto; color:var(--muted); font-size:.72rem; letter-spacing:.1em; }
+  #build .zone .zmove{ font-size:.82rem; color:var(--ink-2); font-style:italic; margin-top:3px; }
+  #build .zone .drop{ flex:1; padding:11px 13px 13px; }
+  #build .zone.over{ background:color-mix(in srgb, var(--dh) 12%, var(--sheet)); border-color:var(--dh); }
+  #build .zone.armed{ border-color:var(--dh); }
+  #build .zone.armed .drop{ cursor:copy; }
+
+  #build .zone[data-domain="clear"]{ --dh:var(--h-clear); }
+  #build .zone[data-domain="complicated"]{ --dh:var(--h-complicated); }
+  #build .zone[data-domain="complex"]{ --dh:var(--h-complex); }
+  #build .zone[data-domain="chaotic"]{ --dh:var(--h-chaotic); }
+  #build .zone[data-domain="confusion"]{ --dh:var(--h-confusion); }
+
+  /* -- Transitions ------------------------------------------- */
+  #build .transitions{ padding:0 clamp(12px,2.2vw,22px) 18px; }
+  /* full width: from/to, reason and Add all sit on one line, wrapping when tight */
+  #build #tForm{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; }
+  #build .tgrid{ display:grid; grid-template-columns:minmax(120px,1fr) auto minmax(120px,1fr); gap:7px; align-items:center; flex:1 1 300px; }
+  #build .tgrid select{ min-width:0; background:var(--paper); border:1px solid var(--rule); border-radius:2px; padding:7px 8px; font-size:.85rem; }
+  #build .tgrid .arw{ color:var(--muted); font-size:.9rem; }
+  #build .trow{ display:flex; gap:8px; flex:2 1 320px; min-width:0; }
+  /* say why Add is unavailable instead of silently doing nothing. Deliberately
+     not red: red is the Chaotic domain color here, so it would misread. */
+  #build .tnote{ flex:1 1 100%; margin:2px 0 0; font-size:.84rem; font-style:italic; color:var(--ink-2); }
+  #build .trow input{ flex:1; min-width:0; background:var(--paper); border:1px solid var(--rule); border-radius:2px; padding:7px 9px; font-size:.88rem; }
+  #build .tlist{
+    list-style:none; margin:14px 0 0; padding:0;
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:7px 12px;
+  }
+  #build .tlist li{
+    display:flex; align-items:center; gap:8px; font-size:.85rem;
+    padding:6px 8px; background:var(--paper); border:1px solid var(--rule); border-radius:2px;
+  }
+  #build .tlist .tt{ flex:1; min-width:0; overflow-wrap:anywhere; }
+  #build .tlist .tt i{ font-style:normal; font-family:var(--sans); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:600; }
+  #build .tlist .tt em{ color:var(--muted); font-size:.82rem; }
+  #build .tlist .kill{ flex:none; background:none; border:0; cursor:pointer; color:var(--muted); font-size:1rem; line-height:1; padding:0 2px; }
+  #build .tlist .kill:hover{ color:var(--h-chaotic); }
+
+  /* -- Read-out ---------------------------------------------- */
+  #build .readout{ padding:0 clamp(12px,2.2vw,22px) 44px; }
+  /* full width, so the observations run in columns rather than one long stack.
+     Each keeps its domain color as a rule, matching the card language. */
+  #build .read ul{
+    margin:0; padding:0; list-style:none;
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:12px 22px;
+  }
+  #build .read li{
+    margin:0; font-size:.9rem; color:var(--ink-2); line-height:1.45;
+    border-left:3px solid var(--mk,var(--muted)); padding:5px 0 5px 12px;
+  }
+  #build .read li b{ color:var(--ink); font-weight:600; }
+  #build .tally{ display:flex; flex-wrap:wrap; gap:5px 14px; padding:12px 14px; border-bottom:1px solid var(--rule); }
+  #build .tally .t{ display:flex; align-items:center; gap:6px; font-family:var(--sans); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  #build .tally .t i{ width:7px; height:7px; border-radius:50%; background:var(--dh); display:block; }
+  #build .tally .t b{ color:var(--ink); font-family:var(--serif); font-size:.95rem; letter-spacing:0; }
+
+  /* -- Output ------------------------------------------------ */
+  #build .export{ padding:0 clamp(12px,2.2vw,22px) 18px; }
+  #build .tabrow{ display:flex; flex-wrap:wrap; gap:4px; align-items:center; padding:9px 12px; border-bottom:1px solid var(--rule); }
+  #build .tabrow .spacer{ flex:1; }
+  #build .tab{
+    font-family:var(--sans); font-size:.67rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600;
+    padding:6px 11px; border-radius:2px; cursor:pointer; background:transparent;
+    border:1px solid transparent; color:var(--muted);
+  }
+  #build .tab:hover{ color:var(--ink); }
+  #build .tab[aria-selected="true"]{ color:var(--ink); border-color:var(--rule); background:var(--paper); }
+  #build .pane[hidden]{ display:none; }
+  #build .chk{ display:flex; align-items:center; gap:6px; font-family:var(--sans); font-size:.67rem; letter-spacing:.12em; text-transform:uppercase; font-weight:600; color:var(--muted); cursor:pointer; }
+  #build .chk input{ accent-color:var(--ink); }
+
+  #build .inset{
+    background:#EFEDE3; border-top:1px solid rgba(27,33,30,.14);
+    padding:18px 14px; overflow-x:auto; filter:var(--inset-dim); min-height:180px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #build #dia{ width:100%; min-width:0; }
+  /* mermaid writes an inline max-width onto the svg, which pins the diagram at its
+     intrinsic size in a wider pane. Override it so the diagram scales to the window,
+     and cap the height so a tall board still fits on screen. */
+  #build #dia svg{
+    display:block; margin:0 auto;
+    width:100% !important;
+    max-width:100% !important;
+    height:auto !important;
+    max-height:76vh;
+  }
+  #build .err{
+    margin:0; padding:14px 18px; background:var(--sunk); border-top:1px solid var(--rule);
+    color:var(--h-chaotic); font-size:.85rem; font-family:var(--sans); letter-spacing:.04em;
+  }
+  #build .err[hidden]{ display:none; }
+  #build .src{
+    margin:0; padding:16px 18px; overflow-x:auto; background:var(--sunk);
+    font-family:ui-monospace,"Cascadia Mono",Consolas,"SF Mono",Menlo,monospace;
+    font-size:.79rem; line-height:1.6; color:var(--ink); tab-size:2;
+    border-top:1px solid var(--rule); white-space:pre;
+  }
+  #build .foot{ padding:11px 14px; font-size:.8rem; color:var(--muted); border-top:1px solid var(--rule); }
+
+  /* ===== Learn pane ===================================================== */
+
+  /* -- Tokens ----------------------------------------------------------- */
+  :root{
+    color-scheme: light dark;
+
+    --paper:  #F0F1EC;
+    --sheet:  #F8F9F5;
+    --ink:    #1B211E;
+    --ink-2:  #4E5A55;
+    --muted:  #7C8883;
+    --rule:   #CDD3CB;
+    --plate:  #E6E9E1;
+    --plate-2:#DDE1D8;
+    --shadow: 0 1px 0 rgba(27,33,30,.06), 0 12px 28px -18px rgba(27,33,30,.45);
+    --inset-dim: none;
+
+    --h-clear:       #A07717;
+    --h-complicated: #2F6485;
+    --h-complex:     #2C7A5D;
+    --h-chaotic:     #A63F26;
+    --h-confusion:      #5B5578;
+
+    --serif: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Hoefler Text",Georgia,serif;
+    --sans: "Avenir Next Condensed","Roboto Condensed","Helvetica Neue Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif;
+
+    --w: 1120px;
+    --prose: 68ch;
+  }
+
+  /* -- Base ------------------------------------------------------------- */
+  *{ box-sizing:border-box; }
+  #learn .wrap{ max-width:var(--w); margin:0 auto; padding:0 24px; }
+  #learn p{ margin:0 0 1em; }
+  #learn a{ color:inherit; text-underline-offset:3px; text-decoration-thickness:1px; }
+
+  #learn .eyebrow{
+    font-family:var(--sans);
+    font-size:.7rem;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+  }
+
+  /* -- Masthead --------------------------------------------------------- */
+  #learn header.mast{
+    border-bottom:1px solid var(--rule);
+    background:
+      linear-gradient(var(--sheet),var(--sheet)) padding-box;
+    position:relative;
+    overflow:hidden;
+  }
+  #learn header.mast::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(to right, var(--rule) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--rule) 1px, transparent 1px);
+    background-size:64px 64px;
+    opacity:.35;
+    pointer-events:none;
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,.9), transparent 82%);
+    -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,.9), transparent 82%);
+  }
+  #learn .mast .wrap{ position:relative; z-index:1; padding-top:46px; padding-bottom:38px; }
+  #learn .sheetline{
+    display:flex; flex-wrap:wrap; gap:6px 22px; align-items:baseline;
+    padding-bottom:20px; margin-bottom:26px;
+    border-bottom:1px solid var(--rule);
+  }
+  #learn h1{
+    font-size:clamp(3rem,10vw,6.2rem);
+    line-height:.94;
+    margin:0;
+    font-weight:400;
+    letter-spacing:-.02em;
+    text-wrap:balance;
+  }
+  #learn .say{
+    font-family:var(--sans);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-size:.78rem;
+    color:var(--ink-2);
+    margin-top:14px;
+  }
+  #learn .say b{ color:var(--ink); font-weight:600; }
+  #learn .thesis{
+    margin-top:22px;
+    max-width:56ch;
+    font-size:clamp(1.12rem,2.1vw,1.34rem);
+    line-height:1.5;
+    color:var(--ink-2);
+  }
+  #learn .thesis em{ color:var(--ink); font-style:italic; }
+
+  /* -- Sections --------------------------------------------------------- */
+  #learn section{ padding:56px 0; border-bottom:1px solid var(--rule); }
+  #learn .shead{ display:flex; align-items:baseline; gap:16px; margin-bottom:8px; }
+  #learn .shead .rule{ flex:1; height:1px; background:var(--rule); }
+  #learn h2{
+    font-size:clamp(1.5rem,3.2vw,2.1rem);
+    font-weight:400; margin:0 0 .35em; letter-spacing:-.01em; text-wrap:balance;
+  }
+  #learn .sintro{ max-width:var(--prose); color:var(--ink-2); }
+
+  /* -- Terrain: map + panel --------------------------------------------- */
+  #learn .terrain{
+    display:grid;
+    grid-template-columns:minmax(300px,1fr) minmax(340px,1.02fr);
+    gap:34px;
+    margin-top:30px;
+    align-items:start;
+  }
+  @media (max-width:900px){ #learn .terrain{ grid-template-columns:1fr; } }
+
+  #learn .mapcard{ position:sticky; top:20px; }
+  @media (max-width:900px){ #learn .mapcard{ position:static; } }
+  #learn svg.map{ width:100%; height:auto; display:block; touch-action:manipulation; }
+
+  #learn .dom{ cursor:pointer; }
+  #learn .dom .plate{
+    fill:var(--plate);
+    stroke:var(--rule);
+    stroke-width:1;
+    transition:fill .22s ease, stroke .22s ease;
+  }
+  #learn .dom .contour{ stroke:var(--dh); fill:none; opacity:.30; stroke-width:1.1; transition:opacity .22s ease; }
+  #learn .dom .dname{
+    font-family:var(--sans); font-size:15px; letter-spacing:.16em; font-weight:600;
+    fill:var(--ink); text-transform:uppercase;
+  }
+  #learn .dom .dtriad{ font-family:var(--serif); font-size:12.5px; fill:var(--ink-2); font-style:italic; }
+  #learn .dom .dprac{ font-family:var(--sans); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; fill:var(--muted); }
+  #learn .dom:hover .plate{ fill:var(--plate-2); }
+  #learn .dom:hover .contour{ opacity:.55; }
+  #learn .dom[aria-pressed="true"] .plate{ fill:color-mix(in srgb, var(--dh) 15%, var(--plate)); stroke:var(--dh); stroke-width:1.8; }
+  #learn .dom[aria-pressed="true"] .contour{ opacity:.85; }
+  #learn .dom[aria-pressed="true"] .dname{ fill:var(--dh); }
+  #learn .dom:focus-visible{ outline:none; }
+  #learn .dom:focus-visible .plate{ stroke:var(--ink); stroke-width:2.4; stroke-dasharray:5 3; }
+
+  #learn .dom[data-domain="clear"]{ --dh:var(--h-clear); }
+  #learn .dom[data-domain="complicated"]{ --dh:var(--h-complicated); }
+  #learn .dom[data-domain="complex"]{ --dh:var(--h-complex); }
+  #learn .dom[data-domain="chaotic"]{ --dh:var(--h-chaotic); }
+  #learn .dom[data-domain="confusion"]{ --dh:var(--h-confusion); }
+
+  #learn .graticule{ stroke:var(--ink); opacity:.055; stroke-width:1; }
+  #learn .frame{ fill:none; stroke:var(--rule); stroke-width:1; }
+  #learn .cliff{ stroke:var(--h-chaotic); stroke-width:1.6; fill:none; }
+  #learn .cliff-tick{ stroke:var(--h-chaotic); stroke-width:1.2; opacity:.75; }
+  #learn .cliff-label{
+    font-family:var(--sans); font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+    fill:var(--h-chaotic);
+  }
+
+  #learn .legend{
+    margin-top:14px; padding-top:14px; border-top:1px solid var(--rule);
+    display:flex; gap:12px; align-items:flex-start;
+    font-size:.9rem; color:var(--ink-2); line-height:1.45;
+  }
+  #learn .legend svg{ flex:none; margin-top:3px; }
+
+  /* -- Domain panel ----------------------------------------------------- */
+  #learn .tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
+  #learn .tab{
+    font-family:var(--sans); font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+    font-weight:600;
+    display:inline-flex; align-items:center; gap:7px;
+    padding:7px 12px; border-radius:2px; cursor:pointer;
+    background:transparent; color:var(--muted);
+    border:1px solid var(--rule);
+    transition:color .18s ease, border-color .18s ease, background .18s ease;
+  }
+  #learn .tab .dot{ width:7px; height:7px; border-radius:50%; background:var(--dh); flex:none; }
+  #learn .tab:hover{ color:var(--ink); border-color:var(--ink-2); }
+  #learn .tab[aria-pressed="true"]{ color:var(--ink); border-color:var(--dh); background:color-mix(in srgb, var(--dh) 10%, transparent); }
+  #learn .tab[data-domain="clear"]{ --dh:var(--h-clear); }
+  #learn .tab[data-domain="complicated"]{ --dh:var(--h-complicated); }
+  #learn .tab[data-domain="complex"]{ --dh:var(--h-complex); }
+  #learn .tab[data-domain="chaotic"]{ --dh:var(--h-chaotic); }
+  #learn .tab[data-domain="confusion"]{ --dh:var(--h-confusion); }
+
+  #learn .panel{
+    background:var(--sheet);
+    border:1px solid var(--rule);
+    border-top:3px solid var(--dh, var(--rule));
+    border-radius:3px;
+    padding:26px 28px 28px;
+    box-shadow:var(--shadow);
+  }
+  #learn .panel[data-domain="clear"]{ --dh:var(--h-clear); }
+  #learn .panel[data-domain="complicated"]{ --dh:var(--h-complicated); }
+  #learn .panel[data-domain="complex"]{ --dh:var(--h-complex); }
+  #learn .panel[data-domain="chaotic"]{ --dh:var(--h-chaotic); }
+  #learn .panel[data-domain="confusion"]{ --dh:var(--h-confusion); }
+
+  #learn .panel h3{
+    font-size:1.9rem; font-weight:400; margin:.15em 0 .1em; letter-spacing:-.01em;
+    color:var(--dh);
+  }
+  #learn .panel .aka{ font-size:.86rem; color:var(--muted); font-style:italic; margin-bottom:1em; }
+  #learn .panel .lead{ font-size:1.06rem; }
+
+  #learn .facts{ display:grid; grid-template-columns:auto 1fr; gap:10px 20px; margin:22px 0 4px; padding-top:20px; border-top:1px solid var(--rule); }
+  #learn .facts dt{ font-family:var(--sans); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:600; padding-top:.3em; }
+  #learn .facts dd{ margin:0; }
+  #learn .facts dd b{ font-weight:600; color:var(--dh); }
+
+  #learn .watch{ margin-top:24px; padding-top:20px; border-top:1px solid var(--rule); }
+  #learn .watch ul{ margin:.6em 0 0; padding-left:1.1em; }
+  #learn .watch li{ margin-bottom:.45em; }
+  #learn .watch li::marker{ color:var(--dh); }
+  #learn .here{ margin-top:20px; font-size:.94rem; color:var(--ink-2); }
+  #learn .here b{ font-family:var(--sans); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:.35em; }
+
+  /* -- Mermaid insets --------------------------------------------------- */
+  #learn .inset{
+    background:#EFEDE3;
+    border:1px solid rgba(27,33,30,.18);
+    border-radius:2px;
+    padding:14px 12px;
+    overflow-x:auto;
+    filter:var(--inset-dim);
+    box-shadow:inset 0 0 0 4px #EFEDE3, inset 0 0 22px rgba(27,33,30,.05);
+  }
+  #learn .inset pre.mermaid{ margin:0; background:none; text-align:center; font-size:.8rem; color:#1B211E; }
+  #learn .stack{ position:relative; min-height:150px; margin:20px 0 4px; }
+  #learn .stack > .inset{
+    position:absolute; inset:0;
+    opacity:0; pointer-events:none;
+    transition:opacity .3s ease;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #learn .stack > .inset[data-active="true"]{ opacity:1; pointer-events:auto; }
+  #learn .inset-cap{ font-family:var(--sans); font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:10px; }
+
+  /* -- Movement / orientation grid -------------------------------------- */
+  #learn .two{ display:grid; grid-template-columns:1fr 1fr; gap:34px; margin-top:30px; align-items:start; }
+  @media (max-width:860px){ #learn .two{ grid-template-columns:1fr; } }
+
+  #learn .moves{ list-style:none; margin:0; padding:0; }
+  #learn .moves li{ padding:14px 0; border-bottom:1px solid var(--rule); }
+  #learn .moves li:first-child{ border-top:1px solid var(--rule); }
+  #learn .moves .mv{ font-family:var(--sans); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:var(--mvc,var(--ink-2)); display:block; margin-bottom:.25em; }
+  #learn .moves p{ margin:0; font-size:.97rem; color:var(--ink-2); }
+  #learn .moves p b{ color:var(--ink); font-weight:600; }
+
+  /* -- Orientation quiz ------------------------------------------------- */
+  #learn .quiz{
+    background:var(--sheet); border:1px solid var(--rule); border-radius:3px;
+    padding:26px 28px 28px; box-shadow:var(--shadow);
+  }
+  #learn .quiz .q{ font-size:1.22rem; line-height:1.4; margin:.3em 0 1.1em; text-wrap:balance; }
+  #learn .opts{ display:flex; flex-direction:column; gap:8px; }
+  #learn .opt{
+    font-family:var(--serif); font-size:1rem; text-align:left; line-height:1.4;
+    background:var(--paper); color:var(--ink);
+    border:1px solid var(--rule); border-left:3px solid var(--rule);
+    border-radius:2px; padding:12px 15px; cursor:pointer;
+    transition:border-color .18s ease, background .18s ease, transform .18s ease;
+  }
+  #learn .opt:hover{ border-left-color:var(--ink); transform:translateX(3px); }
+  #learn .verdict h4{
+    font-family:var(--serif); font-weight:400; font-size:1.8rem; margin:.1em 0 .3em; color:var(--vh);
+  }
+  #learn .verdict .vlabel{ display:block; margin-bottom:.2em; }
+  #learn .verdict p{ color:var(--ink-2); }
+  #learn .verdict .note{
+    margin-top:14px; padding:12px 14px; border-left:3px solid var(--vh);
+    background:color-mix(in srgb, var(--vh) 8%, transparent);
+    font-size:.95rem; color:var(--ink);
+  }
+  #learn .qbtns{ display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+  #learn .btn{
+    font-family:var(--sans); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600;
+    padding:10px 16px; border-radius:2px; cursor:pointer;
+    background:var(--ink); color:var(--paper); border:1px solid var(--ink);
+    transition:opacity .18s ease;
+  }
+  #learn .btn:hover{ opacity:.82; }
+  #learn .btn.ghost{ background:transparent; color:var(--ink-2); border-color:var(--rule); }
+  #learn .btn.ghost:hover{ color:var(--ink); border-color:var(--ink-2); }
+  #learn .steps{ font-family:var(--sans); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+
+  /* -- Cautions --------------------------------------------------------- */
+  #learn .cautions{ display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:1px; margin-top:30px; background:var(--rule); border:1px solid var(--rule); }
+  #learn .caution{ background:var(--paper); padding:22px 24px 24px; }
+  #learn .caution h4{ font-size:1.06rem; font-weight:600; margin:.5em 0 .4em; text-wrap:balance; }
+  #learn .caution p{ margin:0; font-size:.95rem; color:var(--ink-2); }
+
+  /* -- Footer ----------------------------------------------------------- */
+  #learn footer{ padding:44px 0 64px; color:var(--ink-2); font-size:.92rem; }
+  #learn footer .cite{ max-width:var(--prose); }
+  #learn footer .cite p{ margin-bottom:.7em; }
+  #learn footer .colophon{ margin-top:26px; padding-top:18px; border-top:1px solid var(--rule); color:var(--muted); font-size:.84rem; }
+
+  @media (prefers-reduced-motion: reduce){
+    #learn .opt:hover{ transform:none; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1 class="brand">Cynefin</h1>
+  <div class="seg" role="tablist" aria-label="View">
+    <button type="button" role="tab" id="tabBuild" aria-controls="build" aria-selected="true">Build</button>
+    <button type="button" role="tab" id="tabLearn" aria-controls="learn" aria-selected="false">Learn</button>
+  </div>
+  <div class="buildonly" id="buildControls">
+    <input id="boardTitle" type="text" placeholder="Name this board&hellip;" aria-label="Board title" autocomplete="off" />
+    <button class="btn" type="button" id="exportBoard">Export</button>
+    <button class="btn" type="button" id="importBoard">Import</button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden />
+    <button class="btn" type="button" id="loadEg">Load example</button>
+    <button class="btn" type="button" id="clearAll">Clear board</button>
+    <span class="io-note" id="ioNote" role="status" hidden></span>
+  </div>
+</div>
+
+<div id="build" role="tabpanel" aria-labelledby="tabBuild">
+
+
+
+
+<div class="app">
+
+  <!-- -- Unsorted (with the add field on top) ----------------- -->
+  <div class="box">
+    <header>
+      <span class="lbl">Unsorted</span>
+      <span class="spacer"></span>
+      <span class="lbl num" id="unCount">0</span>
+    </header>
+    <div class="body">
+      <form class="add" id="addForm">
+        <input id="addInput" type="text" placeholder="A decision you're facing&hellip;" aria-label="New item" autocomplete="off" />
+        <button class="btn solid" type="submit">Add</button>
+      </form>
+      <p class="hint">
+        Drag a card onto a domain - or click it, then click where it goes.
+        Double-click to rename. With a card focused, <b>1</b>-<b>5</b> assigns a
+        domain and <b>0</b> sends it back.
+      </p>
+      <div class="cards" id="tray" aria-label="Unsorted items"></div>
+    </div>
+  </div>
+
+  <!-- -- Board ----------------------------------------------- -->
+  <!-- DOM order is the stacked (narrow-screen) reading order: ordered to unordered.
+       The 2x2 desktop layout comes from explicit grid placement keyed on
+       data-domain, so it is unaffected by this order. Reordering here rather
+       than with CSS keeps tab and screen-reader order matching what is on screen. -->
+  <div class="board" id="board">
+    <section class="zone" data-domain="clear" aria-label="Clear">
+      <header>
+        <div class="zname">Clear <span class="count num" data-count="clear">0</span></div>
+        <div class="zmove">sense &rarr; categorize &rarr; respond &middot; apply the known answer</div>
+      </header>
+      <div class="drop cards" data-domain="clear"></div>
+    </section>
+
+    <section class="zone" data-domain="complicated" aria-label="Complicated">
+      <header>
+        <div class="zname">Complicated <span class="count num" data-count="complicated">0</span></div>
+        <div class="zmove">sense &rarr; analyze &rarr; respond &middot; name the expert, set an end to analysis</div>
+      </header>
+      <div class="drop cards" data-domain="complicated"></div>
+    </section>
+
+    <section class="zone" data-domain="complex" aria-label="Complex">
+      <header>
+        <div class="zname">Complex <span class="count num" data-count="complex">0</span></div>
+        <div class="zmove">probe &rarr; sense &rarr; respond &middot; parallel safe-to-fail experiments</div>
+      </header>
+      <div class="drop cards" data-domain="complex"></div>
+    </section>
+
+    <section class="zone" data-domain="chaotic" aria-label="Chaotic">
+      <header>
+        <div class="zname">Chaotic <span class="count num" data-count="chaotic">0</span></div>
+        <div class="zmove">act &rarr; sense &rarr; respond &middot; stabilize now, exit into Complex</div>
+      </header>
+      <div class="drop cards" data-domain="chaotic"></div>
+    </section>
+
+    <section class="zone" data-domain="confusion" aria-label="Confusion">
+      <header>
+        <div class="zname">Confusion <span class="count num" data-count="confusion">0</span></div>
+        <div class="zmove">aporia is knowing you don&rsquo;t know, confusion is not noticing &middot; break it into parts and sort the parts</div>
+      </header>
+      <div class="drop cards" data-domain="confusion"></div>
+    </section>
+  </div>
+</div>
+
+<!-- -- Transitions ------------------------------------------- -->
+<div class="transitions">
+  <div class="box">
+    <header><span class="lbl">Transitions</span></header>
+    <div class="body">
+      <form id="tForm">
+        <div class="tgrid">
+          <select id="tFrom" aria-label="Transition from"></select>
+          <span class="arw" aria-hidden="true">&rarr;</span>
+          <select id="tTo" aria-label="Transition to"></select>
+        </div>
+        <div class="trow">
+          <input id="tLabel" type="text" placeholder="Why it moves (optional)" aria-label="Transition label" autocomplete="off" />
+          <button class="btn" type="submit" id="tAdd">Add</button>
+        </div>
+        <p class="tnote" id="tNote" role="status" hidden>A transition needs two different domains.</p>
+      </form>
+      <ul class="tlist" id="tList"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- -- Output ------------------------------------------------ -->
+<div class="export">
+  <div class="box">
+    <div class="tabrow" role="tablist" aria-label="Output">
+      <button class="tab" type="button" role="tab" id="tab-diagram" aria-selected="true" aria-controls="pane-diagram">Diagram</button>
+      <button class="tab" type="button" role="tab" id="tab-source" aria-selected="false" aria-controls="pane-source">Mermaid source</button>
+      <span class="spacer"></span>
+      <label class="chk"><input type="checkbox" id="showDesc" /> Domain descriptions</label>
+      <button class="btn" type="button" id="copyBtn">Copy source</button>
+    </div>
+
+    <div class="pane" id="pane-diagram" role="tabpanel" aria-labelledby="tab-diagram">
+      <div class="inset"><div id="dia"></div></div>
+      <p class="err" id="err" hidden></p>
+    </div>
+
+    <div class="pane" id="pane-source" role="tabpanel" aria-labelledby="tab-source" hidden>
+      <pre class="src" id="src" tabindex="0"></pre>
+    </div>
+
+    <div class="foot" id="foot"></div>
+  </div>
+</div>
+
+<!-- -- Read of the board ------------------------------------- -->
+<div class="readout">
+  <div class="box read">
+    <header><span class="lbl">Read of the board</span></header>
+    <div class="tally" id="tally"></div>
+    <div class="body"><ul id="readList"></ul></div>
+  </div>
+</div>
+
+
+
+</div>
+
+<div id="learn" role="tabpanel" aria-labelledby="tabLearn" hidden>
+
+
+<header class="mast">
+  <div class="wrap">
+    <div class="sheetline">
+      <span class="eyebrow">Sensemaking framework</span>
+      <span class="eyebrow">Snowden, 1999</span>
+      <span class="eyebrow">Five domains &middot; one cliff</span>
+    </div>
+    <h1>Cynefin</h1>
+    <div class="say">Welsh &middot; <b>kuh&#8209;NEV&#8209;in</b> &middot; the place of your multiple belongings</div>
+    <p class="thesis">
+      Before you choose what to do, work out <em>what kind of place you are standing in</em>.
+      Cynefin sorts situations by how cause and effect behave - and each terrain
+      demands a different first move. Getting the terrain wrong is how good decisions fail.
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <!-- &#x2550;&#x2550;&#x2550; TERRAIN &#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550; -->
+  <section id="terrain">
+    <div class="wrap">
+      <div class="shead"><span class="eyebrow">Terrain</span><span class="rule"></span></div>
+      <h2>The five domains</h2>
+      <p class="sintro">
+        Pick a region on the sheet. The panel beside it gives the domain&rsquo;s
+        decision sequence, the kind of practice that works there, and the way people
+        most often come unstuck.
+      </p>
+
+      <div class="terrain">
+        <!-- &#x2500;&#x2500; The map &#x2500;&#x2500; -->
+        <div class="mapcard">
+          <svg class="map" viewBox="0 0 540 560" role="group" aria-label="Cynefin terrain map - five selectable domains">
+            <defs>
+              <clipPath id="c-complex"><rect x="24" y="24" width="228" height="228" rx="6"/></clipPath>
+              <clipPath id="c-complicated"><rect x="288" y="24" width="228" height="228" rx="6"/></clipPath>
+              <clipPath id="c-chaotic"><rect x="24" y="288" width="228" height="228" rx="6"/></clipPath>
+              <clipPath id="c-clear"><rect x="288" y="288" width="228" height="228" rx="6"/></clipPath>
+            </defs>
+
+            <!-- graticule -->
+            <g class="graticule">
+              <path d="M0 80H540M0 160H540M0 240H540M0 320H540M0 400H540M0 480H540"/>
+              <path d="M80 0V560M160 0V560M240 0V560M320 0V560M400 0V560M480 0V560"/>
+            </g>
+            <rect class="frame" x="8" y="8" width="524" height="524" rx="3"/>
+
+            <!-- COMPLEX -->
+            <g class="dom" data-domain="complex" tabindex="0" role="button" aria-pressed="false" aria-label="Complex domain">
+              <rect class="plate" x="24" y="24" width="228" height="228" rx="6"/>
+              <g class="contour" clip-path="url(#c-complex)">
+                <ellipse cx="150" cy="150" rx="30" ry="24" transform="rotate(-18 150 150)"/>
+                <ellipse cx="142" cy="146" rx="58" ry="44" transform="rotate(-12 142 146)"/>
+                <ellipse cx="132" cy="152" rx="88" ry="66" transform="rotate(-6 132 152)"/>
+                <ellipse cx="120" cy="146" rx="122" ry="92" transform="rotate(4 120 146)"/>
+                <ellipse cx="196" cy="86" rx="22" ry="15" transform="rotate(24 196 86)"/>
+              </g>
+              <text class="dname" x="44" y="58">Complex</text>
+              <text class="dtriad" x="44" y="78">probe &middot; sense &middot; respond</text>
+              <text class="dprac" x="44" y="234">emergent practice</text>
+            </g>
+
+            <!-- COMPLICATED -->
+            <g class="dom" data-domain="complicated" tabindex="0" role="button" aria-pressed="false" aria-label="Complicated domain">
+              <rect class="plate" x="288" y="24" width="228" height="228" rx="6"/>
+              <g class="contour" clip-path="url(#c-complicated)">
+                <rect x="378" y="114" width="48" height="48" rx="2"/>
+                <rect x="358" y="94" width="88" height="88" rx="2"/>
+                <rect x="338" y="74" width="128" height="128" rx="2"/>
+                <rect x="318" y="54" width="168" height="168" rx="2"/>
+                <path d="M402 114V94M402 182v20M378 138h-20M426 138h20"/>
+              </g>
+              <text class="dname" x="308" y="58">Complicated</text>
+              <text class="dtriad" x="308" y="78">sense &middot; analyze &middot; respond</text>
+              <text class="dprac" x="308" y="234">good practice</text>
+            </g>
+
+            <!-- CHAOTIC -->
+            <g class="dom" data-domain="chaotic" tabindex="0" role="button" aria-pressed="false" aria-label="Chaotic domain">
+              <rect class="plate" x="24" y="288" width="228" height="228" rx="6"/>
+              <g class="contour" clip-path="url(#c-chaotic)">
+                <path d="M42 396l26-22 18 30 24-40 20 26 22-34 26 42 20-28 24 34"/>
+                <path d="M40 442l30 26-16 24 34-12 12 30 26-38 22 26 20-34 28 28"/>
+                <path d="M48 350l22-30 26 16 18-32 30 24 16-28 30 34 22-22"/>
+                <path d="M36 486l34-18 14 26 30-30 24 22"/>
+              </g>
+              <text class="dname" x="44" y="322">Chaotic</text>
+              <text class="dtriad" x="44" y="342">act &middot; sense &middot; respond</text>
+              <text class="dprac" x="44" y="498">novel practice</text>
+            </g>
+
+            <!-- CLEAR -->
+            <g class="dom" data-domain="clear" tabindex="0" role="button" aria-pressed="false" aria-label="Clear domain">
+              <rect class="plate" x="288" y="288" width="228" height="228" rx="6"/>
+              <g class="contour" clip-path="url(#c-clear)">
+                <circle cx="402" cy="402" r="26"/>
+                <circle cx="402" cy="402" r="52"/>
+                <circle cx="402" cy="402" r="78"/>
+                <circle cx="402" cy="402" r="104"/>
+              </g>
+              <text class="dname" x="308" y="322">Clear</text>
+              <text class="dtriad" x="308" y="342">sense &middot; categorize &middot; respond</text>
+              <text class="dprac" x="308" y="498">best practice</text>
+            </g>
+
+            <!-- THE CLIFF: hachured boundary between Clear and Chaotic -->
+            <g aria-hidden="true">
+              <path class="cliff" d="M270 292V512"/>
+              <g class="cliff-tick">
+                <path d="M270 300h-11M270 316h-13M270 332h-10M270 348h-13M270 364h-11M270 380h-13M270 396h-10M270 412h-13M270 428h-11M270 444h-13M270 460h-10M270 476h-13M270 492h-11M270 508h-12"/>
+              </g>
+              <text class="cliff-label" x="266" y="546" text-anchor="middle">The cliff</text>
+            </g>
+
+            <!-- APORIA -->
+            <g class="dom" data-domain="confusion" tabindex="0" role="button" aria-pressed="false" aria-label="Confusion, the central domain of not knowing">
+              <!-- Half-diagonal 58, not 44: this was sized for the 6-character label
+                   "Aporia", and merge.js renames it to the 9-character "Confusion",
+                   which overflowed the shape. At the text baseline the diamond is now
+                   ~106px wide against a ~83px label. Overlapping the four corners is
+                   correct here: Confusion sits over all of them. -->
+              <path class="plate" d="M270 212l58 58-58 58-58-58z"/>
+              <g class="contour" clip-path="none">
+                <path d="M270 236l34 34-34 34-34-34z"/>
+                <path d="M270 249l21 21-21 21-21-21z"/>
+              </g>
+              <text class="dname" x="270" y="275" text-anchor="middle" style="font-size:12.5px;letter-spacing:.14em;">Confusion</text>
+            </g>
+          </svg>
+
+          <div class="legend">
+            <svg width="34" height="16" aria-hidden="true" viewBox="0 0 34 16">
+              <path d="M17 1v14" stroke="var(--h-chaotic)" stroke-width="1.6" fill="none"/>
+              <path d="M17 3H8M17 7H6M17 11H9M17 14H7" stroke="var(--h-chaotic)" stroke-width="1.2" opacity=".75" fill="none"/>
+            </svg>
+            <span>
+              Hachures mark the only catastrophic edge on the sheet. Every other boundary
+              is a slope you can walk back up; the Clear&nbsp;/&nbsp;Chaotic boundary is a fall.
+            </span>
+          </div>
+        </div>
+
+        <!-- &#x2500;&#x2500; The panel &#x2500;&#x2500; -->
+        <div>
+          <div class="tabs" role="group" aria-label="Choose a domain">
+            <button class="tab" type="button" data-domain="clear" aria-pressed="false"><span class="dot"></span>Clear</button>
+            <button class="tab" type="button" data-domain="complicated" aria-pressed="false"><span class="dot"></span>Complicated</button>
+            <button class="tab" type="button" data-domain="complex" aria-pressed="false"><span class="dot"></span>Complex</button>
+            <button class="tab" type="button" data-domain="chaotic" aria-pressed="false"><span class="dot"></span>Chaotic</button>
+            <button class="tab" type="button" data-domain="confusion" aria-pressed="false"><span class="dot"></span>Confusion</button>
+          </div>
+
+          <article class="panel" id="panel" data-domain="clear" aria-live="polite">
+            <span class="eyebrow" id="p-eyebrow">Selected terrain</span>
+            <h3 id="p-name">Clear</h3>
+            <div class="aka" id="p-aka"></div>
+            <p class="lead" id="p-lead"></p>
+
+            <div class="stack" id="stack">
+              <div class="inset" data-for="clear">
+<pre class="mmd-src">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Sense"] --> B["Categorize"] --> C["Respond"]
+  C -.-> D["Best practice"]
+  classDef s fill:#EDF4EA,stroke:#3B7A32,stroke-width:1.6px,color:#1B211E
+  classDef o fill:#D6E7CF,stroke:#3B7A32,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+  class D o
+</pre>
+              </div>
+              <div class="inset" data-for="complicated">
+<pre class="mmd-src">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Sense"] --> B["Analyze"] --> C["Respond"]
+  C -.-> D["Good practice"]
+  classDef s fill:#F5F2DF,stroke:#806E0C,stroke-width:1.6px,color:#1B211E
+  classDef o fill:#EAE4BE,stroke:#806E0C,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+  class D o
+</pre>
+              </div>
+              <div class="inset" data-for="complex">
+<pre class="mmd-src">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Probe"] --> B["Sense"] --> C["Respond"]
+  C -.-> D["Emergent practice"]
+  C -.->|"amplify or dampen"| A
+  classDef s fill:#F8EFE5,stroke:#AD5510,stroke-width:1.6px,color:#1B211E
+  classDef o fill:#F0DCC4,stroke:#AD5510,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+  class D o
+</pre>
+              </div>
+              <div class="inset" data-for="chaotic">
+<pre class="mmd-src">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Act"] --> B["Sense"] --> C["Respond"]
+  C -.-> D["Novel practice"]
+  classDef s fill:#F8E9E8,stroke:#AF2723,stroke-width:1.6px,color:#1B211E
+  classDef o fill:#EFCECB,stroke:#AF2723,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+  class D o
+</pre>
+              </div>
+              <div class="inset" data-for="confusion">
+<pre class="mmd-src">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart LR
+  A["Break it<br/>into parts"] --> B["Place each part"] --> C["Act per domain"]
+  classDef s fill:#EDEFEE,stroke:#5E6A64,stroke-width:1.6px,color:#1B211E
+  class A,B,C s
+</pre>
+              </div>
+            </div>
+            <div class="inset-cap">Decision sequence</div>
+
+            <dl class="facts">
+              <dt>Cause &amp; effect</dt><dd id="p-cause"></dd>
+              <dt>Constraints</dt><dd id="p-constraints"></dd>
+              <dt>Your job</dt><dd id="p-job"></dd>
+            </dl>
+
+            <div class="watch">
+              <span class="eyebrow">Where it goes wrong</span>
+              <ul id="p-watch"></ul>
+            </div>
+
+            <div class="here">
+              <b>You are probably here when</b>
+              <span id="p-here"></span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- &#x2550;&#x2550;&#x2550; MOVEMENT &#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550; -->
+  <section id="movement">
+    <div class="wrap">
+      <div class="shead"><span class="eyebrow">Movement</span><span class="rule"></span></div>
+      <h2>Nothing stays in its domain</h2>
+      <p class="sintro">
+        The value of the framework is not the five boxes - it is the traffic between
+        them. Some crossings you engineer on purpose. One happens to you.
+      </p>
+
+      <div class="two">
+        <div class="inset" style="align-self:start;">
+<pre class="mmd-src">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"13px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart TD
+  CH["Chaotic"] -->|"stabilize first"| CX["Complex"]
+  CX -->|"patterns hold, codify"| CD["Complicated"]
+  CD -->|"habit hardens"| CL["Clear"]
+  CL -.->|"complacency: the fall"| CH
+  CL -->|"the rule stops working"| CD
+  CX -.->|"deliberate shallow dive"| CH
+  AP(["Confusion"]) -.-> CX
+  AP -.-> CD
+  classDef ch fill:#F8E9E8,stroke:#AF2723,stroke-width:1.6px,color:#1B211E
+  classDef cx fill:#F8EFE5,stroke:#AD5510,stroke-width:1.6px,color:#1B211E
+  classDef cd fill:#F5F2DF,stroke:#806E0C,stroke-width:1.6px,color:#1B211E
+  classDef cl fill:#EDF4EA,stroke:#3B7A32,stroke-width:1.6px,color:#1B211E
+  classDef ap fill:#EDEFEE,stroke:#5E6A64,stroke-width:1.6px,color:#1B211E
+  class CH ch
+  class CX cx
+  class CD cd
+  class CL cl
+  class AP ap
+</pre>
+        </div>
+
+        <ul class="moves">
+          <li style="--mvc:var(--h-chaotic)">
+            <span class="mv">The cliff - Clear to Chaotic</span>
+            <p>The only crossing with no gradient. Rules that worked for years stop working all at once, and
+            because nobody was watching for it, <b>there is no shallow water to stand in</b>. Recovery is
+            expensive and slow. Complacency is the mechanism.</p>
+          </li>
+          <li style="--mvc:var(--h-complex)">
+            <span class="mv">The recovery - Chaotic to Complex</span>
+            <p>Out of chaos you go to <b>Complex, not to Clear</b>. Act to stabilize, then start probing.
+            Leaders who try to jump straight back to best practice re-create the conditions of the fall.</p>
+          </li>
+          <li style="--mvc:var(--h-complicated)">
+            <span class="mv">Codification - Complex to Complicated</span>
+            <p>When probes keep producing the same pattern, the pattern becomes analysable. This is where
+            <b>exaptation</b> lives too: something built for one purpose gets radically repurposed under
+            constraint, and the new use is knowable even though its origin was not.</p>
+          </li>
+          <li style="--mvc:var(--h-clear)">
+            <span class="mv">Entrainment - Complicated to Clear</span>
+            <p>Expert judgment calcifies into &ldquo;the way we do it.&rdquo; Useful, and quietly dangerous:
+            <b>entrained thinking is what stops you seeing the edge approach</b>.</p>
+          </li>
+          <li style="--mvc:var(--h-chaotic)">
+            <span class="mv">The shallow dive - deliberate chaos</span>
+            <p>Chaos is the cheapest place to be novel, because no established practice is defending itself.
+            You can enter it <b>on purpose and briefly</b> to break entrained thinking - then pull back
+            into Complex before the turbulence costs you.</p>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- &#x2550;&#x2550;&#x2550; ORIENTATION &#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550; -->
+  <section id="orientation">
+    <div class="wrap">
+      <div class="shead"><span class="eyebrow">Orientation</span><span class="rule"></span></div>
+      <h2>Which terrain are you standing on?</h2>
+      <p class="sintro">
+        Two questions. The first sorts you; the second checks whether you flattered yourself.
+        Answer for one specific decision in front of you right now - not for the whole project.
+      </p>
+
+      <div class="two">
+        <div class="quiz" id="quiz">
+          <div class="steps" id="q-steps">Question 1 of 2</div>
+          <p class="q" id="q-text">Loading&hellip;</p>
+          <div class="opts" id="q-opts"></div>
+          <div class="qbtns" id="q-btns"></div>
+        </div>
+
+        <div>
+          <div class="inset">
+<pre class="mmd-src">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"13px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
+flowchart TD
+  Q{"How does cause<br/>and effect behave?"}
+  Q -->|"obvious to everyone"| CL["Clear"]
+  Q -->|"an expert can work it out"| CD["Complicated"]
+  Q -->|"only visible in hindsight"| CX["Complex"]
+  Q -->|"no time to even ask"| CH["Chaotic"]
+  Q -->|"I honestly cannot tell"| AP(["Confusion"])
+  AP -.->|"split the situation up<br/>and ask again per part"| Q
+  classDef ch fill:#F8E9E8,stroke:#AF2723,stroke-width:1.6px,color:#1B211E
+  classDef cx fill:#F8EFE5,stroke:#AD5510,stroke-width:1.6px,color:#1B211E
+  classDef cd fill:#F5F2DF,stroke:#806E0C,stroke-width:1.6px,color:#1B211E
+  classDef cl fill:#EDF4EA,stroke:#3B7A32,stroke-width:1.6px,color:#1B211E
+  classDef ap fill:#EDEFEE,stroke:#5E6A64,stroke-width:1.6px,color:#1B211E
+  class CH ch
+  class CX cx
+  class CD cd
+  class CL cl
+  class AP ap
+</pre>
+          </div>
+          <div class="inset-cap">The sorting question</div>
+          <p style="margin-top:22px;color:var(--ink-2);font-size:.97rem;">
+            The center is not one state but two. <b>Aporia</b> is the active one: you know you do
+            not know, and you hold the question open on purpose. <b>Confusion</b> is the passive
+            one: you have not noticed, so you drift toward whichever domain you are most
+            comfortable in. Only the second is a failure state, and the way out of both is the
+            same: stop treating the mess as one thing, break it into parts, and place each part
+            separately.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- &#x2550;&#x2550;&#x2550; CAUTIONS &#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550; -->
+  <section id="cautions">
+    <div class="wrap">
+      <div class="shead"><span class="eyebrow">Cautions</span><span class="rule"></span></div>
+      <h2>How the framework gets misused</h2>
+      <p class="sintro">
+        Most of these come from Snowden himself, usually with more force than this.
+      </p>
+
+      <div class="cautions">
+        <div class="caution">
+          <span class="eyebrow">Category error</span>
+          <h4>It sorts your relationship to a situation, not the situation</h4>
+          <p>&ldquo;Is deployment complicated or complex?&rdquo; is the wrong question. The same deployment
+          is Clear to the team that has done it two hundred times and Complex to the team meeting the
+          system for the first time. The domain describes you and it, together, today.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Not a 2&times;2</span>
+          <h4>The boundaries are not symmetric</h4>
+          <p>The neat quadrant drawing - including the one above - misleads. Four of the
+          boundaries are gradients you cross gradually and can reverse. The Clear&nbsp;/&nbsp;Chaotic
+          boundary is a cliff. Treating them as equivalent edges is the single most common reading error.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Granularity</span>
+          <h4>Nothing real sits in one domain</h4>
+          <p>A program of work is never &ldquo;a complex project.&rdquo; It is payroll (Clear), a
+          migration (Complicated), an adoption question (Complex), and one incident that is on fire
+          (Chaotic). Assigning a single domain to a whole initiative throws away the entire point.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Vocabulary drift</span>
+          <h4>&ldquo;Simple&rdquo; was renamed for a reason</h4>
+          <p>The first domain went Simple &rarr; Obvious &rarr; Clear, because calling it simple invited
+          contempt for the people working in it and blinded everyone to how quickly it can collapse.
+          The center likewise stopped being plain Disorder and split in two: <b>aporia</b>, the active
+          state where you know you do not know, and <b>confusion</b>, the passive one where you have
+          not noticed. Snowden notates them A and C. They are not synonyms, and only confusion is a
+          failure mode.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Best practice</span>
+          <h4>Best practice is a Clear-domain instrument</h4>
+          <p>Outside Clear it is at best a starting hypothesis. Importing a playbook that worked
+          somewhere else into a Complex situation is how organizations spend a year proving that
+          their context is different.</p>
+        </div>
+        <div class="caution">
+          <span class="eyebrow">Default domain</span>
+          <h4>Everyone has a preferred terrain</h4>
+          <p>Under Confusion, people do not choose a domain - they fall back to the one they are
+          most comfortable acting in. Analysts see Complicated everywhere; firefighters see Chaotic.
+          Knowing your own default is most of the defense against it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="cite">
+      <span class="eyebrow">Provenance</span>
+      <p style="margin-top:.8em;">
+        Cynefin was developed by <b>Dave Snowden</b> at IBM Global Services from 1999, and set out
+        with Cynthia Kurtz in &ldquo;The new dynamics of strategy: sense-making in a complex and
+        complicated world&rdquo; (<i>IBM Systems Journal</i>, 2003). It reached a general management
+        audience through Snowden and Mary Boone&rsquo;s &ldquo;A Leader&rsquo;s Framework for Decision
+        Making&rdquo; (<i>Harvard Business Review</i>, November 2007).
+      </p>
+      <p>
+        The framework has kept moving since: the first domain was renamed twice, the center split
+        into aporia and confusion, and later work added <i>liminal</i> zones for the deliberate,
+        managed transitions between domains. This sheet describes the framework as commonly taught today; it is a
+        secondary summary, not a Cynefin&nbsp;Co. publication.
+      </p>
+    </div>
+    <div class="colophon">
+      Diagrams rendered with Mermaid. Terrain map drawn in SVG, with cartographic hachures
+      marking the Clear&nbsp;/&nbsp;Chaotic cliff.
+    </div>
+  </div>
+</footer>
+
+
+</div>
+
+<!-- Mermaid is vendored rather than inlined so the browser caches it separately:
+     the page is ~27 KB gzipped, the library ~948 KB. Editing the page no longer
+     invalidates the library. Plain src, NOT defer: the inline scripts below are
+     not deferred, so a deferred library would load after them and __MM__ would
+     be undefined. Relative path, so file:// and a project Pages path both work. -->
+<script src="assets/mermaid.min.js"></script>
+<script>window.__MM__ = window.mermaid;</script>
+
+<script>
+(function(){
+  "use strict";
+
+  var MM = window.__MM__;
+  var KEY = "cynefin-builder-v2";
+  /* ordered to unordered: drives the 1-5 shortcuts, the tally, and the mermaid
+     emission order, so they all agree with the stacked board order */
+  var ORDER = ["clear","complicated","complex","chaotic","confusion"];
+
+  var META = {
+    complex:     { name:"Complex" },
+    complicated: { name:"Complicated" },
+    chaotic:     { name:"Chaotic" },
+    clear:       { name:"Clear" },
+    confusion:   { name:"Confusion" },
+    unsorted:    { name:"Unsorted" }
+  };
+
+  var EXAMPLE = {
+    title: "Delivery board - Q3",
+    items: [
+      { t:"Q3 payroll run",                        d:"clear" },
+      { t:"SOC 2 renewal evidence",                d:"clear" },
+      { t:"Checkout is slow on Android",           d:"complicated" },
+      { t:"Postgres 15 to 17 upgrade",             d:"complicated" },
+      { t:"Getting sales to actually use the CRM", d:"complex" },
+      { t:"Repricing the mid tier",                d:"complex" },
+      { t:"Auth outage, cause unknown",            d:"chaotic" },
+      { t:"Whether to open a second office",       d:"confusion" },
+      { t:"Support backlog keeps growing",         d:null }
+    ],
+    trans: [
+      { f:"chaotic", to:"complex",     l:"Stabilize, then probe" },
+      { f:"clear",   to:"chaotic",     l:"Complacency: the cliff" },
+      { f:"complex", to:"complicated", l:"Pattern holds, codify" }
+    ]
+  };
+
+  var seq = 1, tseq = 1;
+  var items = [], trans = [], title = "";
+  var selected = null;
+
+  /* -- storage --------------------------------------------- */
+  function save(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify({ title:title, items:items, trans:trans }));
+    }catch(e){}
+  }
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return false;
+      var s = JSON.parse(raw);
+      if(!s || Object.prototype.toString.call(s.items) !== "[object Array]") return false;
+      title = typeof s.title === "string" ? s.title : "";
+      items = s.items.filter(function(i){ return i && typeof i.t === "string"; });
+      trans = (Object.prototype.toString.call(s.trans) === "[object Array]" ? s.trans : [])
+                .filter(function(t){ return t && META[t.f] && META[t.to]; });
+      items.forEach(function(i){ i.id = i.id || ("i" + (seq++)); });
+      trans.forEach(function(t){ t.id = t.id || ("t" + (tseq++)); });
+      return true;
+    }catch(e){ return false; }
+  }
+  function loadExample(){
+    title = EXAMPLE.title;
+    items = EXAMPLE.items.map(function(e){ return { id:"i"+(seq++), t:e.t, d:e.d }; });
+    trans = EXAMPLE.trans.map(function(e){ return { id:"t"+(tseq++), f:e.f, to:e.to, l:e.l }; });
+  }
+
+  /* -- refs ------------------------------------------------ */
+  var tray      = document.getElementById("tray");
+  var srcEl     = document.getElementById("src");
+  var diaEl     = document.getElementById("dia");
+  var errEl     = document.getElementById("err");
+  var footEl    = document.getElementById("foot");
+  var readList  = document.getElementById("readList");
+  var tallyEl   = document.getElementById("tally");
+  var unCount   = document.getElementById("unCount");
+  var tListEl   = document.getElementById("tList");
+  var titleInput= document.getElementById("boardTitle");
+  var showDesc  = document.getElementById("showDesc");
+
+  function byDomain(d){ return items.filter(function(i){ return (i.d || null) === d; }); }
+  function find(id){ for(var i=0;i<items.length;i++){ if(items[i].id===id) return items[i]; } return null; }
+
+  /* -- cards ----------------------------------------------- */
+  function makeCard(it){
+    var el = document.createElement("div");
+    el.className = "card";
+    el.draggable = true;
+    el.tabIndex = 0;
+    el.dataset.id = it.id;
+    el.setAttribute("role","button");
+    el.setAttribute("aria-selected", selected === it.id ? "true" : "false");
+    el.title = "Drag to a domain, or click then click a domain. Double-click to rename.";
+
+    var txt = document.createElement("span");
+    txt.className = "ctext";
+    txt.textContent = it.t;
+    el.appendChild(txt);
+
+    var kill = document.createElement("button");
+    kill.type = "button";
+    kill.className = "kill";
+    kill.innerHTML = "&times;";
+    kill.setAttribute("aria-label", "Delete " + it.t);
+    kill.addEventListener("click", function(e){
+      e.stopPropagation();
+      items = items.filter(function(x){ return x.id !== it.id; });
+      if(selected === it.id) selected = null;
+      commit();
+    });
+    el.appendChild(kill);
+
+    el.addEventListener("dragstart", function(e){
+      el.classList.add("dragging");
+      try{ e.dataTransfer.setData("text/plain", it.id); }catch(err){}
+      e.dataTransfer.effectAllowed = "move";
+    });
+    el.addEventListener("dragend", function(){
+      el.classList.remove("dragging");
+      Array.prototype.slice.call(document.querySelectorAll(".zone,.box"))
+        .forEach(function(z){ z.classList.remove("over"); });
+    });
+    el.addEventListener("click", function(e){
+      if(e.target === kill) return;
+      selected = (selected === it.id) ? null : it.id;
+      paintSelection();
+    });
+    el.addEventListener("dblclick", function(){ beginEdit(el, it); });
+    el.addEventListener("keydown", function(e){
+      if(e.key === "Enter"){ e.preventDefault(); beginEdit(el, it); return; }
+      if(e.key === "Delete" || e.key === "Backspace"){
+        e.preventDefault();
+        items = items.filter(function(x){ return x.id !== it.id; });
+        commit(); return;
+      }
+      var n = parseInt(e.key,10);
+      if(n >= 1 && n <= 5){ e.preventDefault(); it.d = ORDER[n-1]; commit(); return; }
+      if(e.key === "0"){ e.preventDefault(); it.d = null; commit(); }
+    });
+
+    return el;
+  }
+
+  function beginEdit(el, it){
+    var txt = el.querySelector(".ctext");
+    if(!txt) return;
+    var input = document.createElement("input");
+    input.className = "edit";
+    input.type = "text";
+    input.value = it.t;
+    el.draggable = false;
+    el.replaceChild(input, txt);
+    input.focus();
+    input.select();
+
+    var done = false;
+    function finish(keep){
+      if(done) return;
+      done = true;
+      if(keep){
+        var v = input.value.trim();
+        if(v) it.t = v;
+      }
+      el.draggable = true;
+      commit();
+    }
+    input.addEventListener("keydown", function(e){
+      if(e.key === "Enter"){ e.preventDefault(); finish(true); }
+      else if(e.key === "Escape"){ e.preventDefault(); finish(false); }
+    });
+    input.addEventListener("blur", function(){ finish(true); });
+    input.addEventListener("click", function(e){ e.stopPropagation(); });
+    input.addEventListener("dblclick", function(e){ e.stopPropagation(); });
+  }
+
+  function paintSelection(){
+    Array.prototype.slice.call(document.querySelectorAll(".card")).forEach(function(c){
+      c.setAttribute("aria-selected", c.dataset.id === selected ? "true" : "false");
+    });
+    Array.prototype.slice.call(document.querySelectorAll(".zone")).forEach(function(z){
+      z.classList.toggle("armed", !!selected);
+    });
+  }
+
+  function renderCards(){
+    var targets = [{ el:tray, d:null }];
+    ORDER.forEach(function(k){
+      targets.push({ el:document.querySelector('.drop[data-domain="' + k + '"]'), d:k });
+    });
+    targets.forEach(function(t){
+      t.el.innerHTML = "";
+      var list = byDomain(t.d);
+      if(!list.length){
+        var e = document.createElement("div");
+        e.className = "empty";
+        e.textContent = t.d ? "-" : "Everything is placed.";
+        t.el.appendChild(e);
+      } else {
+        list.forEach(function(it){ t.el.appendChild(makeCard(it)); });
+      }
+    });
+    ORDER.forEach(function(k){
+      var c = document.querySelector('[data-count="' + k + '"]');
+      if(c) c.textContent = byDomain(k).length;
+    });
+    unCount.textContent = byDomain(null).length;
+    paintSelection();
+  }
+
+  /* -- transitions ----------------------------------------- */
+  function renderTrans(){
+    tListEl.innerHTML = "";
+    if(!trans.length){
+      var e = document.createElement("li");
+      e.style.border = "0";
+      e.style.background = "none";
+      e.style.padding = "0";
+      e.style.gridColumn = "1 / -1";   /* the list is a grid; span it rather than sit in one cell */
+      e.innerHTML = '<span class="empty">No transitions yet.</span>';
+      tListEl.appendChild(e);
+      return;
+    }
+    trans.forEach(function(t){
+      var li = document.createElement("li");
+      var span = document.createElement("span");
+      span.className = "tt";
+      span.innerHTML =
+        '<i style="color:var(--h-' + t.f + ')">' + META[t.f].name + '</i>' +
+        ' <span style="color:var(--muted)">&rarr;</span> ' +
+        '<i style="color:var(--h-' + t.to + ')">' + META[t.to].name + '</i>' +
+        (t.l ? '<br><em>' + escHtml(t.l) + '</em>' : '');
+      li.appendChild(span);
+
+      var kill = document.createElement("button");
+      kill.type = "button";
+      kill.className = "kill";
+      kill.innerHTML = "&times;";
+      kill.setAttribute("aria-label","Delete transition");
+      kill.addEventListener("click", function(){
+        trans = trans.filter(function(x){ return x.id !== t.id; });
+        commit();
+      });
+      li.appendChild(kill);
+      tListEl.appendChild(li);
+    });
+  }
+
+  function escHtml(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  /* -- the read -------------------------------------------- */
+  function renderRead(){
+    var n = {};
+    ORDER.forEach(function(k){ n[k] = byDomain(k).length; });
+    var un = byDomain(null).length;
+    var placed = ORDER.reduce(function(a,k){ return a + n[k]; }, 0);
+    var total = placed + un;
+
+    tallyEl.innerHTML = "";
+    ORDER.concat(["unsorted"]).forEach(function(k){
+      var v = (k === "unsorted") ? un : n[k];
+      var s = document.createElement("span");
+      s.className = "t";
+      s.style.setProperty("--dh", "var(--h-" + (k === "unsorted" ? "unplaced" : k) + ")");
+      s.innerHTML = '<i></i>' + META[k].name + ' <b class="num">' + v + '</b>';
+      tallyEl.appendChild(s);
+    });
+
+    var out = [];
+    function say(hue, html){ out.push({ hue:hue, html:html }); }
+
+    if(total === 0){
+      say("unplaced", "Empty board. Add the decisions actually in front of you - one per card, at the size you would act on.");
+    } else {
+      if(un > 0) say("unplaced", "<b>" + un + "</b> still unsorted.");
+      if(n.chaotic > 0)
+        say("chaotic", "<b>" + n.chaotic + "</b> in Chaotic - act to stabilize before anything else, and plan the exit into <b>Complex</b>, not back to the playbook.");
+      if(n.complex > 0)
+        say("complex", "<b>" + n.complex + "</b> in Complex - these need <b>parallel</b> safe-to-fail probes, not a plan and a date.");
+      if(n.complicated > 0)
+        say("complicated", "<b>" + n.complicated + "</b> in Complicated - name the expert, hear a second one, and set the point where analysis stops.");
+      if(n.clear > 0)
+        say("clear", "<b>" + n.clear + "</b> in Clear - apply the known answer and do not get clever.");
+      if(n.confusion > 0)
+        say("confusion", "<b>" + n.confusion + "</b> in Confusion - split each into parts and sort the parts; a thing that resists placement is usually several things.");
+
+      if(placed >= 4 && n.clear / placed > 0.55)
+        say("clear", "Over half your placed board is <b>Clear</b>. Worth a second pass: has any of these ever surprised you? One genuine surprise means it is not Clear.");
+      if(placed >= 4 && n.confusion === 0 && un === 0)
+        say("confusion", "Nothing in <b>Confusion</b> and nothing unsorted. Confident boards are usually boards where someone quietly defaulted to their favorite domain.");
+      if(placed >= 3 && n.complex === 0 && n.chaotic === 0)
+        say("complicated", "No <b>Complex</b> or <b>Chaotic</b> items at all - every problem here is knowable. That is a strong claim about a real portfolio.");
+      if(n.chaotic > 0 && n.clear > 0)
+        say("chaotic", "You have items on both sides of the <b>cliff</b>. That boundary is the one with no gradient - complacency in Clear is what puts things in Chaotic.");
+    }
+
+    readList.innerHTML = "";
+    out.forEach(function(o){
+      var li = document.createElement("li");
+      li.style.setProperty("--mk", "var(--h-" + o.hue + ")");
+      li.innerHTML = o.html;
+      readList.appendChild(li);
+    });
+  }
+
+  /* -- mermaid source (cynefin-beta) ----------------------- */
+  function q(s){
+    return String(s).replace(/"/g, "'").replace(/[\r\n]+/g, " ").trim();
+  }
+
+  function buildSource(){
+    var L = [];
+    L.push('%%{init:{"cynefin":{"showDomainDescriptions":' + (showDesc.checked ? "true" : "false") + '}}}%%');
+    L.push("cynefin-beta");
+    if(title.trim()) L.push("title " + q(title));
+
+    ORDER.forEach(function(k){
+      var list = byDomain(k);
+      if(!list.length) return;
+      L.push("");
+      L.push("  " + k);
+      list.forEach(function(it){ L.push('    "' + q(it.t) + '"'); });
+    });
+
+    var real = trans.filter(function(t){ return t.f !== t.to; });
+    if(real.length){
+      L.push("");
+      real.forEach(function(t){
+        L.push("  " + t.f + " --> " + t.to + (t.l && t.l.trim() ? ' : "' + q(t.l) + '"' : ""));
+      });
+    }
+
+    return L.join("\n");
+  }
+
+  /* -- live render ----------------------------------------- */
+  var rid = 0;
+
+  /* A long item label makes cynefin-beta draw its box wider than the diagram,
+     spilling past the viewBox origin where it is silently clipped. Refit the
+     viewBox to the real content box so nothing is lost. */
+  function fit(){
+    var svg = diaEl.querySelector("svg");
+    if(!svg) return;
+    var b;
+    try{ b = svg.getBBox(); }catch(e){ return; }
+    if(!b || !isFinite(b.width) || b.width <= 0 || b.height <= 0) return;  /* hidden pane reads 0 */
+    var pad = 14;
+    svg.setAttribute("viewBox",
+      (b.x - pad) + " " + (b.y - pad) + " " + (b.width + pad*2) + " " + (b.height + pad*2));
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svg.removeAttribute("height");
+  }
+
+  function draw(src){
+    if(!MM || typeof MM.render !== "function"){
+      errEl.hidden = false;
+      errEl.textContent = "Mermaid did not load, so the diagram is unavailable. The Mermaid source tab still works.";
+      return;
+    }
+    var token = ++rid;
+    var id = "cyn-" + token;
+    var p;
+    try{
+      p = MM.render(id, src);
+    }catch(e){
+      showErr(e); return;
+    }
+    if(p && typeof p.then === "function"){
+      p.then(function(res){
+        if(token !== rid) return;
+        diaEl.innerHTML = res.svg;
+        fit();
+        errEl.hidden = true;
+      }, function(e){
+        if(token !== rid) return;
+        showErr(e);
+      });
+    } else if(p && p.svg){
+      diaEl.innerHTML = p.svg;
+      fit();
+      errEl.hidden = true;
+    }
+  }
+
+  function showErr(e){
+    errEl.hidden = false;
+    errEl.textContent = "Mermaid could not draw this board: " + (e && e.message ? e.message : String(e));
+    var stray = document.getElementById("dcyn-" + rid);
+    if(stray && stray.parentNode) stray.parentNode.removeChild(stray);
+  }
+
+  /* -- commit ---------------------------------------------- */
+  function commit(){
+    renderCards();
+    renderTrans();
+    renderRead();
+    var src = buildSource();
+    srcEl.textContent = src;
+    footEl.textContent =
+      items.length + (items.length === 1 ? " item" : " items") + " \u00B7 " +
+      trans.length + (trans.length === 1 ? " transition" : " transitions") +
+      " \u00B7 mermaid " + "11.16.1" + " cynefin-beta, bundled in this page";
+    draw(src);
+    save();
+  }
+
+  /* -- drop zones ------------------------------------------ */
+  function wireZone(el, domain){
+    var host = el.closest(".zone") || el.closest(".box");
+    el.addEventListener("dragover", function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if(host) host.classList.add("over");
+    });
+    el.addEventListener("dragleave", function(e){
+      if(host && !el.contains(e.relatedTarget)) host.classList.remove("over");
+    });
+    el.addEventListener("drop", function(e){
+      e.preventDefault();
+      if(host) host.classList.remove("over");
+      var id = "";
+      try{ id = e.dataTransfer.getData("text/plain"); }catch(err){}
+      var it = find(id);
+      if(it){ it.d = domain; selected = null; commit(); }
+    });
+    el.addEventListener("click", function(e){
+      if(e.target.closest(".card")) return;
+      if(!selected) return;
+      var it = find(selected);
+      if(it){ it.d = domain; selected = null; commit(); }
+    });
+  }
+  ORDER.forEach(function(k){ wireZone(document.querySelector('.drop[data-domain="' + k + '"]'), k); });
+  wireZone(tray, null);
+
+  /* -- controls -------------------------------------------- */
+  var addForm = document.getElementById("addForm");
+  var addInput = document.getElementById("addInput");
+
+  addForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var v = addInput.value.trim();
+    if(!v) return;
+    items.push({ id:"i" + (seq++), t:v, d:null });
+    addInput.value = "";
+    commit();
+    addInput.focus();
+  });
+
+  var tFrom = document.getElementById("tFrom");
+  var tTo   = document.getElementById("tTo");
+  var tLabel= document.getElementById("tLabel");
+  ORDER.forEach(function(k){
+    [tFrom, tTo].forEach(function(sel){
+      var o = document.createElement("option");
+      o.value = k;
+      o.textContent = META[k].name;
+      sel.appendChild(o);
+    });
+  });
+  /* first two in the house order, so the form opens on what the lists show.
+     It is also a real dynamic: Clear back to Complicated is "the rule stops working". */
+  tFrom.value = ORDER[0];
+  tTo.value = ORDER[1];
+
+  var tAdd = document.getElementById("tAdd");
+  var tNote = document.getElementById("tNote");
+
+  function syncTForm(){
+    var same = tFrom.value === tTo.value;
+    tAdd.disabled = same;
+    tNote.hidden = !same;
+  }
+  tFrom.addEventListener("change", syncTForm);
+  tTo.addEventListener("change", syncTForm);
+  syncTForm();
+
+  document.getElementById("tForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if(tFrom.value === tTo.value){ syncTForm(); return; }   /* backstop */
+    trans.push({ id:"t" + (tseq++), f:tFrom.value, to:tTo.value, l:tLabel.value.trim() });
+    tLabel.value = "";
+    commit();
+  });
+
+  titleInput.addEventListener("input", function(){
+    title = titleInput.value;
+    var src = buildSource();
+    srcEl.textContent = src;
+    draw(src);
+    save();
+  });
+
+  showDesc.addEventListener("change", commit);
+
+  /* -- export / import ------------------------------------------------
+     Plain browser download and file input, so this works on the file on disk.
+     A page-initiated download is blocked inside the artifact viewer sandbox;
+     open the local copy to move boards around. */
+  var FORMAT = "cynefin-board", FORMAT_VERSION = 1;
+  var ioNote = document.getElementById("ioNote");
+  var noteTimer = null;
+
+  function say(msg, bad){
+    ioNote.textContent = msg;
+    ioNote.hidden = false;
+    if(bad){ ioNote.setAttribute("data-bad","true"); } else { ioNote.removeAttribute("data-bad"); }
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(function(){ ioNote.hidden = true; }, 6000);
+  }
+
+  function plural(n, word){ return n + " " + word + (n === 1 ? "" : "s"); }
+
+  function slug(s){
+    return String(s || "cynefin-board").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "cynefin-board";
+  }
+
+  document.getElementById("exportBoard").addEventListener("click", function(){
+    var payload = {
+      format: FORMAT,
+      version: FORMAT_VERSION,
+      exportedAt: new Date().toISOString(),
+      title: title,
+      items: items.map(function(i){ return { id:i.id, t:i.t, d:i.d || null }; }),
+      trans: trans.map(function(t){ return { id:t.id, f:t.f, to:t.to, l:t.l || "" }; })
+    };
+    var stamp = payload.exportedAt.slice(0, 10);          /* ISO 8601 date */
+    var name = slug(title) + "-" + stamp + ".json";
+    try{
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+      say("Exported " + plural(items.length,"item") + " and " + plural(trans.length,"transition") +
+          " to " + name + ". If nothing downloaded, this page is in a sandbox that blocks it; open the local copy.");
+    }catch(e){
+      say("Could not build the export file: " + (e && e.message ? e.message : e), true);
+    }
+  });
+
+  /* Returns {items, trans, title} or throws with a reason the user can act on. */
+  function parseBoard(text){
+    var data;
+    try{ data = JSON.parse(text); }
+    catch(e){ throw new Error("that file is not valid JSON"); }
+    if(!data || typeof data !== "object" || Array.isArray(data))
+      throw new Error("that file does not contain a board");
+    if(data.format !== FORMAT)
+      throw new Error("that is not a Cynefin board file");
+    if(Object.prototype.toString.call(data.items) !== "[object Array]")
+      throw new Error("the file has no items list");
+
+    var ok = {}; ORDER.forEach(function(k){ ok[k] = true; });
+    var n = 1;
+    var outItems = data.items
+      .filter(function(i){ return i && typeof i.t === "string" && i.t.trim(); })
+      .map(function(i){ return { id:"i" + (n++), t:i.t.trim(), d: ok[i.d] ? i.d : null }; });
+
+    var m = 1;
+    var rawTrans = Object.prototype.toString.call(data.trans) === "[object Array]" ? data.trans : [];
+    var outTrans = rawTrans
+      .filter(function(t){ return t && ok[t.f] && ok[t.to] && t.f !== t.to; })
+      .map(function(t){ return { id:"t" + (m++), f:t.f, to:t.to, l: typeof t.l === "string" ? t.l.trim() : "" }; });
+
+    if(!outItems.length && !outTrans.length)
+      throw new Error("that board is empty, nothing to import");
+
+    return {
+      title: typeof data.title === "string" ? data.title : "",
+      items: outItems, trans: outTrans,
+      dropped: data.items.length - outItems.length
+    };
+  }
+
+  var importFile = document.getElementById("importFile");
+  document.getElementById("importBoard").addEventListener("click", function(){
+    importFile.value = "";          /* so re-picking the same file still fires */
+    importFile.click();
+  });
+
+  importFile.addEventListener("change", function(){
+    var file = importFile.files && importFile.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onerror = function(){ say("Could not read that file.", true); };
+    reader.onload = function(){
+      var board;
+      try{ board = parseBoard(String(reader.result)); }
+      catch(e){ say("Import failed: " + e.message + ".", true); return; }
+
+      /* importing replaces the board, so confirm when there is work to lose */
+      if(items.length && !window.confirm(
+           "Replace the current board (" + items.length + " items) with " +
+           board.items.length + " items from " + file.name + "?")){
+        say("Import cancelled. Nothing changed.");
+        return;
+      }
+
+      title = board.title; items = board.items; trans = board.trans;
+      seq = items.length + 1; tseq = trans.length + 1;
+      selected = null;
+      titleInput.value = title;
+      commit();
+      say("Imported " + plural(items.length,"item") + " and " + plural(trans.length,"transition") + " from " +
+          file.name + (board.dropped > 0 ? " (" + board.dropped + " unreadable entries skipped)" : "") + ".");
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("clearAll").addEventListener("click", function(){
+    items = []; trans = []; title = ""; selected = null;
+    titleInput.value = "";
+    commit();
+    addInput.focus();
+  });
+
+  document.getElementById("loadEg").addEventListener("click", function(){
+    loadExample();
+    selected = null;
+    titleInput.value = title;
+    commit();
+  });
+
+  /* tabs */
+  var tabD = document.getElementById("tab-diagram");
+  var tabS = document.getElementById("tab-source");
+  var paneD = document.getElementById("pane-diagram");
+  var paneS = document.getElementById("pane-source");
+  function pick(which){
+    var d = which === "diagram";
+    tabD.setAttribute("aria-selected", d ? "true" : "false");
+    tabS.setAttribute("aria-selected", d ? "false" : "true");
+    paneD.hidden = !d;
+    paneS.hidden = d;
+    if(d) fit();   /* getBBox reads 0 while the pane is hidden, so refit on the way back */
+  }
+  tabD.addEventListener("click", function(){ pick("diagram"); });
+  tabS.addEventListener("click", function(){ pick("source"); });
+
+  /* copy */
+  var copyBtn = document.getElementById("copyBtn");
+  copyBtn.addEventListener("click", function(){
+    var text = srcEl.textContent;
+    function flash(msg){
+      var was = copyBtn.textContent;
+      copyBtn.textContent = msg;
+      setTimeout(function(){ copyBtn.textContent = was; }, 1600);
+    }
+    function fallback(){
+      pick("source");
+      var r = document.createRange();
+      r.selectNodeContents(srcEl);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      var ok = false;
+      try{ ok = document.execCommand("copy"); }catch(e){}
+      flash(ok ? "Copied" : "Selected - press Ctrl+C");
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ flash("Copied"); }, fallback);
+    } else { fallback(); }
+  });
+
+  /* deselect */
+  document.addEventListener("click", function(e){
+    if(!selected) return;
+    if(e.target.closest(".card") || e.target.closest(".drop") || e.target.closest("#tray")) return;
+    selected = null;
+    paintSelection();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && selected){ selected = null; paintSelection(); }
+  });
+
+  /* -- boot ------------------------------------------------ */
+  if(MM && typeof MM.initialize === "function"){
+    MM.initialize({
+      startOnLoad: false,
+      securityLevel: "strict",
+      theme: "base",
+      fontFamily: 'Georgia, "Iowan Old Style", Palatino, serif',
+      themeVariables: {
+        fontSize: "14px",
+        lineColor: "#5B6862",
+        primaryTextColor: "#1B211E",
+        textColor: "#1B211E"
+      },
+      cynefin: { showDomainDescriptions: false }
+    });
+  }
+
+  if(!load()) loadExample();
+  titleInput.value = title;
+  commit();
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  const DOMAINS = {
+    clear: {
+      name: "Clear",
+      aka: "formerly Simple, then Obvious",
+      lead: "Cause and effect are visible to everyone involved, and everyone would agree on them. There is a right answer and it is not in dispute.",
+      cause: "Obvious - <b>self&#8209;evident</b> to any reasonable observer",
+      constraints: "Fixed and rigid. The process is the point.",
+      job: "Categorize correctly, then apply the known answer. Resist the urge to be clever.",
+      watch: [
+        "<b>Oversimplification.</b> Classifying something as Clear because you want it to be, then applying a checklist to a situation that had a twist in it.",
+        "<b>Complacency.</b> Clear is the only domain with a cliff on its border. Success here quietly stops people watching for the conditions that made it work.",
+        "<b>Contempt for the work.</b> Calling it &ldquo;simple&rdquo; devalues the people who keep it running and hides how much judgment is actually in there."
+      ],
+      here: "Order processing, standard credit checks, a well-drilled pre-flight checklist, a support ticket that matches a known article exactly."
+    },
+    complicated: {
+      name: "Complicated",
+      aka: "the domain of experts",
+      lead: "Cause and effect are knowable, but not by looking. Analysis or expertise is required, and there is usually more than one defensible right answer.",
+      cause: "Knowable through <b>analysis</b>, with time and expertise",
+      constraints: "Governing constraints - rules that bound how the system behaves",
+      job: "Get the right experts, hear more than one of them, then choose. Analysis has to end in a decision.",
+      watch: [
+        "<b>Expert entrainment.</b> Experts are the reason this domain works and the reason it fails; deep experience makes novel solutions literally hard to see.",
+        "<b>Analysis paralysis.</b> Because a right answer exists, teams keep looking for it past the point where the cost of delay exceeds the cost of being slightly wrong.",
+        "<b>Dismissing the non-expert.</b> The outsider&rsquo;s naive question is the standard antidote to entrainment, and it is the one most often talked over."
+      ],
+      here: "Diagnosing an intermittent fault, structural engineering, tax treatment of an unusual transaction, tuning a database that is behaving badly."
+    },
+    complex: {
+      name: "Complex",
+      aka: "where most interesting work lives",
+      lead: "Cause and effect are only coherent in retrospect. The system changes as you act in it, so you cannot analyze your way to an answer in advance - you have to interact with it to find out what it does.",
+      cause: "Visible <b>only in hindsight</b>; the act of intervening changes it",
+      constraints: "Enabling constraints - boundaries loose enough for patterns to emerge",
+      job: "Run several safe&#8209;to&#8209;fail probes in parallel, then amplify what works and dampen what does not.",
+      watch: [
+        "<b>Reaching for best practice.</b> The impulse to import a playbook is strongest exactly where playbooks do least good.",
+        "<b>Probes that are not safe to fail.</b> An experiment you cannot afford to lose is not an experiment; it is a bet with a research label on it.",
+        "<b>Premature order.</b> Demanding a plan and a date too early collapses the domain into a fake Complicated one, and the plan then fails on contact.",
+        "<b>Serial probing.</b> One experiment at a time surfaces one pattern at a time, slowly. Parallel probes are the method, not a luxury."
+      ],
+      here: "Culture change, entering a new market, product-market fit, adoption of a tool nobody asked for, any situation where people react to your intervention."
+    },
+    chaotic: {
+      name: "Chaotic",
+      aka: "turbulence, not merely difficulty",
+      lead: "There is no discernible relationship between cause and effect, and no time to look for one. Searching for the right answer is itself the wrong move; the situation needs a boundary put around it now.",
+      cause: "<b>No detectable relationship</b> - and no time to establish one",
+      constraints: "Absent. Nothing is holding the system in shape.",
+      job: "Act to stabilize, then sense what changed, then respond. Take the decision; do not seek consensus.",
+      watch: [
+        "<b>Staying too long.</b> Command works here and works nowhere else, and it is addictive - leaders who are good in a crisis have an incentive not to leave one.",
+        "<b>Exiting to the wrong domain.</b> The way out is into Complex, not straight back to Clear. Jumping to best practice rebuilds the conditions for the next fall.",
+        "<b>Missing the window.</b> Chaos is where novelty is cheapest, because no established practice is there defending itself. Crises are usually wasted."
+      ],
+      here: "A live outage with an unknown cause, the first hours of a genuine emergency, a market event nobody modeled, the moment a fundamental assumption breaks in public."
+    },
+    confusion: {
+      name: "Confusion",
+      aka: "the central domain, in its passive mode; aporia is the active one",
+      lead: "You do not know which domain you are in, and this is the most common state there is. It has two modes. <b>Aporia</b> is the active one: you know you do not know, and you hold the question open on purpose - the productive puzzlement that comes before understanding. <b>Confusion</b> is the passive one: you have not noticed, so you drift. Only the second is a failure state.",
+      cause: "<b>Undetermined</b> - you have not yet established how it behaves",
+      constraints: "Unknown, which is the actual finding",
+      job: "Break the situation into parts and place each part in a domain. Say out loud that you do not yet know.",
+      watch: [
+        "<b>Silent default.</b> Under uncertainty people do not choose a domain, they retreat to their favorite one - analysts to Complicated, operators to Clear, firefighters to Chaotic.",
+        "<b>Treating the mess as one thing.</b> A situation that resists placement is almost always several situations wearing one name.",
+        "<b>Mistaking it for chaos.</b> Confusion is not turbulence. Nothing is necessarily on fire; you simply have not worked out the terrain yet, and you may well have time to."
+      ],
+      here: "Most first meetings about a problem, most incident reviews before the timeline is built, and nearly every situation where two smart people are confidently disagreeing about what kind of problem it is."
+    }
+  };
+
+  const panel  = document.getElementById("panel");
+  const stack  = document.getElementById("stack");
+  const groups = Array.prototype.slice.call(document.querySelectorAll(".dom"));
+  const tabs   = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  const insets = Array.prototype.slice.call(stack.querySelectorAll(".inset"));
+
+  function select(key){
+    const d = DOMAINS[key];
+    if(!d) return;
+
+    panel.setAttribute("data-domain", key);
+    document.getElementById("p-name").textContent = d.name;
+    document.getElementById("p-aka").textContent  = d.aka;
+    document.getElementById("p-lead").innerHTML   = d.lead;
+    document.getElementById("p-cause").innerHTML  = d.cause;
+    document.getElementById("p-constraints").textContent = d.constraints;
+    document.getElementById("p-job").innerHTML    = d.job;
+    document.getElementById("p-here").textContent = d.here;
+    document.getElementById("p-watch").innerHTML  =
+      d.watch.map(function(w){ return "<li>" + w + "</li>"; }).join("");
+
+    insets.forEach(function(el){
+      el.setAttribute("data-active", el.getAttribute("data-for") === key ? "true" : "false");
+    });
+    groups.forEach(function(g){
+      g.setAttribute("aria-pressed", g.getAttribute("data-domain") === key ? "true" : "false");
+    });
+    tabs.forEach(function(t){
+      t.setAttribute("aria-pressed", t.getAttribute("data-domain") === key ? "true" : "false");
+    });
+  }
+
+  groups.forEach(function(g){
+    const key = g.getAttribute("data-domain");
+    g.addEventListener("click", function(){ select(key); });
+    g.addEventListener("keydown", function(e){
+      if(e.key === "Enter" || e.key === " " || e.key === "Spacebar"){
+        e.preventDefault();
+        select(key);
+      }
+    });
+  });
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){ select(t.getAttribute("data-domain")); });
+  });
+
+  select("clear");
+
+  /* \u2500\u2500 Orientation quiz \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+
+  const Q1 = {
+    text: "For the decision actually in front of you - how does cause and effect behave?",
+    opts: [
+      { t: "Everyone involved can see the cause, and would agree on it.", to: "clear" },
+      { t: "Nobody can see it now, but the right expert could work it out.", to: "complicated" },
+      { t: "It will only make sense looking backwards, once we\u2019ve acted.", to: "complex" },
+      { t: "Things are moving too fast to even ask the question.", to: "chaotic" },
+      { t: "I genuinely can\u2019t tell which of these is true.", to: "confusion" }
+    ]
+  };
+
+  const Q2 = {
+    clear: {
+      text: "Has this exact situation ever surprised you - even once?",
+      opts: [
+        { t: "No. It has behaved the same way every single time.", to: "clear", note:
+          "Then act. Categorize it and apply the known answer. Keep one eye on the edge: Clear is the only domain you can fall out of without warning." },
+        { t: "Yes, at least once it did something we didn\u2019t expect.", to: "complicated", note:
+          "Then it isn\u2019t Clear. A single genuine surprise means the causal chain has a piece in it you haven\u2019t mapped - treat it as Complicated and get someone to actually analyze it before you standardize." }
+      ]
+    },
+    complicated: {
+      text: "Put the two best-qualified people in a room. Do they agree on the right answer?",
+      opts: [
+        { t: "Broadly, yes - they\u2019d argue about method, not about outcome.", to: "complicated", note:
+          "Then it is Complicated. Commission the analysis, but set the point at which analysis stops and a decision gets made - and let one non-expert ask the naive question before you commit." },
+        { t: "No - they\u2019d reach genuinely different conclusions.", to: "complex", note:
+          "Expert disagreement of that kind usually means there is no knowable right answer yet, only competing hypotheses. Treat it as Complex: run their positions as parallel safe-to-fail probes rather than picking the more senior expert." }
+      ]
+    },
+    complex: {
+      text: "Can you afford to run a small experiment and have it fail?",
+      opts: [
+        { t: "Yes - we could try two or three things and survive all of them.", to: "complex", note:
+          "Then probe. Run them in parallel, not in sequence, and decide in advance what you\u2019ll amplify and what you\u2019ll dampen. Emergent practice is the output; a plan is not." },
+        { t: "No - a failure right now would do real damage.", to: "chaotic", note:
+          "Complexity you cannot afford to probe is functionally Chaotic. Act first to build enough stability that a failed experiment becomes survivable - then come back and probe from there." }
+      ]
+    },
+    chaotic: {
+      text: "Is anything currently holding the situation in shape - any constraint still doing work?",
+      opts: [
+        { t: "No. Nothing is holding. It\u2019s genuinely loose.", to: "chaotic", note:
+          "Act now, then sense, then respond. Take the decision alone; consensus is a Complicated-domain luxury. And plan your exit into Complex - not back to the playbook that failed." },
+        { t: "Some things still hold - it\u2019s bad, but not unbounded.", to: "complex", note:
+          "That\u2019s pressure, not chaos, and the distinction matters: you still have room to probe. Don\u2019t reach for command authority you don\u2019t need - it is easy to acquire and hard to give back." }
+      ]
+    },
+    confusion: {
+      text: "Can you name two parts of this situation that behave differently from each other?",
+      opts: [
+        { t: "Yes, now that I look - they\u2019re not the same problem.", to: "confusion", note:
+          "That is the whole instruction. Split them, run this sheet against each part separately, and act per part. You will usually find you were about to apply one domain\u2019s method to four different terrains." },
+        { t: "No - it really does seem like one undivided thing.", to: "confusion", note:
+          "Then stay in aporia deliberately and say so out loud. The risk isn\u2019t not knowing; it\u2019s that under uncertainty people quietly retreat to their favorite domain. Gather more before you place it." }
+      ]
+    }
+  };
+
+  const HUE = {
+    clear: "var(--h-clear)", complicated: "var(--h-complicated)",
+    complex: "var(--h-complex)", chaotic: "var(--h-chaotic)", confusion: "var(--h-confusion)"
+  };
+
+  const qSteps = document.getElementById("q-steps");
+  const qText  = document.getElementById("q-text");
+  const qOpts  = document.getElementById("q-opts");
+  const qBtns  = document.getElementById("q-btns");
+  const quiz   = document.getElementById("quiz");
+
+  function renderQ1(){
+    quiz.classList.remove("verdict");
+    quiz.style.removeProperty("--vh");
+    qSteps.textContent = "Question 1 of 2";
+    qText.innerHTML = Q1.text;
+    qText.className = "q";
+    qOpts.innerHTML = "";
+    qBtns.innerHTML = "";
+    Q1.opts.forEach(function(o){
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "opt";
+      b.textContent = o.t;
+      b.addEventListener("click", function(){ renderQ2(o.to); });
+      qOpts.appendChild(b);
+    });
+  }
+
+  function renderQ2(first){
+    const q = Q2[first];
+    quiz.style.setProperty("--vh", HUE[first]);
+    qSteps.textContent = "Question 2 of 2";
+    qText.innerHTML = q.text;
+    qOpts.innerHTML = "";
+    q.opts.forEach(function(o){
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "opt";
+      b.style.borderLeftColor = HUE[o.to];
+      b.textContent = o.t;
+      b.addEventListener("click", function(){ renderVerdict(o.to, o.note); });
+      qOpts.appendChild(b);
+    });
+    qBtns.innerHTML = "";
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "btn ghost";
+    back.textContent = "Back";
+    back.addEventListener("click", renderQ1);
+    qBtns.appendChild(back);
+  }
+
+  function renderVerdict(key, note){
+    const d = DOMAINS[key];
+    quiz.classList.add("verdict");
+    quiz.style.setProperty("--vh", HUE[key]);
+    qSteps.textContent = "Reading";
+    qText.className = "";
+    qText.innerHTML =
+      '<span class="eyebrow vlabel">You are standing on</span>' +
+      '<h4>' + d.name + '</h4>' +
+      '<p>' + d.lead + '</p>' +
+      '<div class="note">' + note + '</div>';
+    qOpts.innerHTML = "";
+    qBtns.innerHTML = "";
+
+    const show = document.createElement("button");
+    show.type = "button";
+    show.className = "btn";
+    show.textContent = "Open " + d.name + " on the map";
+    show.addEventListener("click", function(){
+      select(key);
+      document.getElementById("terrain").scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start"
+      });
+    });
+
+    const again = document.createElement("button");
+    again.type = "button";
+    again.className = "btn ghost";
+    again.textContent = "Start over";
+    again.addEventListener("click", renderQ1);
+
+    qBtns.appendChild(show);
+    qBtns.appendChild(again);
+  }
+
+  renderQ1();
+})();
+</script>
+
+<script>
+/* ---- render the Learn diagrams with the bundled mermaid --------------- */
+(function(){
+  var MM = window.__MM__;
+  if(!MM || typeof MM.render !== "function") return;
+  var pres = document.querySelectorAll("#learn pre.mmd-src");
+  Array.prototype.forEach.call(pres, function(pre, i){
+    var src = pre.textContent;
+    var done = function(res){
+      var d = document.createElement("div");
+      d.className = "mmd";
+      d.innerHTML = res.svg;
+      if(pre.parentNode) pre.parentNode.replaceChild(d, pre);
+    };
+    try{
+      var p = MM.render("lrn" + i, src);
+      if(p && typeof p.then === "function") p.then(done, function(){});
+      else if(p && p.svg) done(p);
+    }catch(e){}
+  });
+})();
+
+/* ---- Build / Learn switch -------------------------------------------- */
+(function(){
+  var tab = { build:document.getElementById("tabBuild"), learn:document.getElementById("tabLearn") };
+  var pane = { build:document.getElementById("build"),   learn:document.getElementById("learn") };
+  var ctl  = document.getElementById("buildControls");
+
+  function show(which){
+    ["build","learn"].forEach(function(k){
+      pane[k].hidden = (k !== which);
+      tab[k].setAttribute("aria-selected", k === which ? "true" : "false");
+    });
+    ctl.hidden = (which !== "build");   /* board title + example/clear are Build-only */
+  }
+  tab.build.addEventListener("click", function(){ show("build"); });
+  tab.learn.addEventListener("click", function(){ show("learn"); });
+  tab.build.addEventListener("keydown", function(e){ if(e.key==="ArrowRight"){ show("learn"); tab.learn.focus(); } });
+  tab.learn.addEventListener("keydown",  function(e){ if(e.key==="ArrowLeft"){  show("build"); tab.build.focus(); } });
+
+  /* Always open on the first tab. The tab is deliberately NOT persisted: a page
+     that reopens on whatever you last clicked is disorienting, and Build is the
+     job. Board contents still persist; only the view resets. */
+  show("build");
+})();
+</script>
+
+</body>
+</html>

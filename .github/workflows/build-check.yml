@@ -1,0 +1,28 @@
+name: build
+
+# The built page is committed so the repo can be cloned and opened with no
+# toolchain. That invites drift, so CI rebuilds from src/ and fails if the
+# committed index.html does not match.
+on:
+  push:
+  pull_request:
+
+jobs:
+  page-is-current:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Rebuild the page from src/
+        working-directory: src
+        run: node merge.js && node assemble.js
+
+      - name: Fail if the committed page is stale
+        run: |
+          if ! git diff --exit-code -- index.html; then
+            echo "::error::index.html does not match a rebuild from src/. Run: cd src && node merge.js && node assemble.js"
+            exit 1
+          fi
