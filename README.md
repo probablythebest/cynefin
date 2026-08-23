@@ -4,9 +4,9 @@ A single page with two tabs, for sorting real work with the Cynefin framework.
 
 - **Build** is a sorting board that is itself the Cynefin diagram: add the decisions
   in front of you, drag them onto a domain, and add transitions, which are drawn as
-  arrows over the panels they connect. Underneath it, a read of the board and the
-  portable `cynefin-beta` source. Work persists in `localStorage`, and can be
-  exported to and imported from JSON.
+  arrows over the panels they connect. Underneath it, the transitions and a read
+  of the board. Work persists in `localStorage`, and exports to and imports from
+  both JSON and Mermaid `cynefin-beta`.
 - **Learn** is an interactive field sheet: a clickable terrain map, per-domain
   decision sequences, the movement between domains, a two-question orientation
   test, and the common misuses.
@@ -139,8 +139,8 @@ accepting whatever a generic top-down layout produces. `CX.arrows` works entirel
 from measured rectangles, which is what lets it serve whatever panel sizes the
 browser hands back.
 
-Mermaid's `cynefin-beta` syntax is still emitted as an export format. Generating
-that text costs nothing and keeps boards portable.
+Mermaid's `cynefin-beta` syntax is still generated, but only when you export a
+`.mmd`. Producing that text costs nothing and keeps boards portable.
 
 **Edge labels are collected and appended after every edge is drawn.** Drawn inline,
 an edge later in the list paints over the plate of a label already placed, and the
@@ -200,15 +200,36 @@ busy, and which needed hand-fitted width and height formulas to stay legible.
 
 ## Export and import
 
-Export writes the board to a JSON file named from the board title plus an ISO date,
-for example `delivery-board-q3-2026-08-16.json`. Import reads one back, replacing
-the board after a confirm when there is work to lose.
+Two formats out, one button in. Files are named from the board title plus an ISO
+date, for example `delivery-board-q3-2026-08-23.json`.
 
-The format is `{format:"cynefin-board", version:1, exportedAt, title, items, trans}`.
-Import validates it: invalid JSON, a wrong or missing `format`, a missing items list,
-or a board with nothing usable are each refused with a specific message, and the
-current board is left untouched. Items whose domain is not one of the five come in as
-unsorted rather than being dropped, and unreadable entries are counted in the result.
+**Export JSON** is the lossless one and the reason it is offered first. The format is
+`{format:"cynefin-board", version:1, exportedAt, title, items, trans}`, and it carries
+everything on the board including the unsorted tray.
+
+**Export Mermaid** writes `cynefin-beta` source, for pasting into any Mermaid-capable
+tool. It cannot carry unsorted items, because the format has nowhere to put an item
+that is not under a domain. The export says so at the time, naming the count, rather
+than letting the tray disappear quietly. The `%%{init}%%` line carries a width and
+height sized from the busiest domain: those are what stop the quadrants overlapping in
+a tool that draws on a fixed canvas, which ours no longer does.
+
+**Import** takes either, and works out which from the content rather than the
+extension, so a `.txt` holding `cynefin-beta` still comes in. It replaces the board
+after a confirm when there is work to lose.
+
+Both parsers refuse rather than half-import, and leave the current board untouched
+when they do: invalid JSON, a wrong or missing `format`, a missing items list, a file
+that is neither format, a Mermaid file of some other diagram type, or a board with
+nothing usable are each refused with a specific message. In the JSON path, items whose
+domain is not one of the five come in as unsorted rather than being dropped, and
+unreadable entries are counted in the result.
+
+The Mermaid reader is deliberately loose about everything except the diagram type,
+because the file may well have been written by hand: item text quoted or not, a colon
+after a domain name, labels quoted or bare, `-->` with any spacing. `aporia` and
+`disorder` both come in as Confusion, being the two older names for the same center
+domain.
 
 ## Conventions
 

@@ -147,9 +147,11 @@ ${P.learnCss}
   </div>
   <div class="buildonly" id="buildControls">
     <input id="boardTitle" type="text" placeholder="Name this board&hellip;" aria-label="Board title" autocomplete="off" />
-    <button class="btn" type="button" id="exportBoard">Export</button>
+    <button class="btn" type="button" id="exportBoard">Export JSON</button>
+    <button class="btn" type="button" id="exportMmd">Export Mermaid</button>
     <button class="btn" type="button" id="importBoard">Import</button>
-    <input type="file" id="importFile" accept="application/json,.json" hidden />
+    <!-- one Import for both formats: the file is sniffed, not trusted to its name -->
+    <input type="file" id="importFile" accept="application/json,.json,.mmd,.mermaid,.txt,text/plain" hidden />
     <button class="btn" type="button" id="loadEg">Load example</button>
     <button class="btn" type="button" id="clearAll">Clear board</button>
     <span class="io-note" id="ioNote" role="status" hidden></span>

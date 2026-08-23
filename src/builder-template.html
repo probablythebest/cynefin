@@ -218,23 +218,13 @@
   .tally .t b{ color:var(--ink); font-family:var(--serif); font-size:.95rem; letter-spacing:0; }
 
   /* -- Output ------------------------------------------------ */
-  .export{ padding:0 clamp(12px,2.2vw,22px) 18px; }
-  .tabrow{ display:flex; flex-wrap:wrap; gap:4px; align-items:center; padding:9px 12px; border-bottom:1px solid var(--rule); }
-  .tabrow .spacer{ flex:1; }
-  .chk{ display:flex; align-items:center; gap:6px; font-family:var(--sans); font-size:.67rem; letter-spacing:.12em; text-transform:uppercase; font-weight:600; color:var(--muted); cursor:pointer; }
-  .chk input{ accent-color:var(--ink); }
+  /* stands on its own under the board now, not inside a card */
   .err{
-    margin:0; padding:14px 18px; background:var(--sunk); border-top:1px solid var(--rule);
+    margin:0; padding:12px 16px; background:var(--sunk);
+    border:1px solid var(--rule); border-radius:3px;
     color:var(--h-chaotic); font-size:.85rem; font-family:var(--sans); letter-spacing:.04em;
   }
   .err[hidden]{ display:none; }
-  .src{
-    margin:0; padding:16px 18px; overflow-x:auto; background:var(--sunk);
-    font-family:ui-monospace,"Cascadia Mono",Consolas,"SF Mono",Menlo,monospace;
-    font-size:.79rem; line-height:1.6; color:var(--ink); tab-size:2;
-    border-top:1px solid var(--rule); white-space:pre;
-  }
-  .foot{ padding:11px 14px; font-size:.8rem; color:var(--muted); border-top:1px solid var(--rule); }
 
   @media (prefers-reduced-motion:reduce){ *{ transition-duration:.001ms !important; } }
 </style>
@@ -344,27 +334,9 @@
   </div>
 </div>
 
-<!-- -- Output ------------------------------------------------ -->
-<div class="export">
-  <div class="box">
-    <!-- The board above is the diagram, so there is no preview of it here. What
-         is left is the portable form of the same thing. -->
-    <div class="tabrow">
-      <span class="lbl">Mermaid source</span>
-      <span class="spacer"></span>
-      <label class="chk"><input type="checkbox" id="showDesc" /> Domain descriptions</label>
-      <button class="btn" type="button" id="copyBtn">Copy source</button>
-    </div>
-
-    <div class="pane">
-      <pre class="src" id="src" tabindex="0"></pre>
-    </div>
-
-    <p class="err" id="err" hidden></p>
-    <div class="foot" id="foot"></div>
-  </div>
-</div>
-
+<!-- the arrow layer reports here when it cannot draw; the board itself is
+     unaffected, so this is a line rather than a blocking state -->
+<p class="err" id="err" hidden></p>
 <!-- -- Read of the board ------------------------------------- -->
 <div class="readout">
   <div class="box read">
@@ -447,7 +419,6 @@
 
   /* -- refs ------------------------------------------------ */
   var tray      = document.getElementById("tray");
-  var srcEl     = document.getElementById("src");
   var boardEl   = document.getElementById("board");
   var arrowEl   = document.getElementById("arrows");
   var errEl     = document.getElementById("err");
@@ -455,13 +426,11 @@
   function zoneEl(k){
     return zoneCache[k] || (zoneCache[k] = boardEl.querySelector('.zone[data-domain="' + k + '"]'));
   }
-  var footEl    = document.getElementById("foot");
   var readList  = document.getElementById("readList");
   var tallyEl   = document.getElementById("tally");
   var unCount   = document.getElementById("unCount");
   var tListEl   = document.getElementById("tList");
   var titleInput= document.getElementById("boardTitle");
-  var showDesc  = document.getElementById("showDesc");
 
   function byDomain(d){ return items.filter(function(i){ return (i.d || null) === d; }); }
   function find(id){ for(var i=0;i<items.length;i++){ if(items[i].id===id) return items[i]; } return null; }
@@ -709,9 +678,9 @@
     var width   = Math.min(1800, Math.max(880, 760 + busiest * 90));
     var height  = Math.min(2400, Math.max(600, 600 + Math.max(0, busiest - 6) * 70));
 
-    L.push('%%{init:{"cynefin":{"showDomainDescriptions":' +
-           (showDesc.checked ? "true" : "false") +
-           ',"width":' + width + ',"height":' + height + '}}}%%');
+    /* width and height travel with the file: they are what keeps the quadrants
+       from overlapping in whatever tool opens it, which draws on a fixed canvas */
+    L.push('%%{init:{"cynefin":{"width":' + width + ',"height":' + height + '}}}%%');
     L.push("cynefin-beta");
     if(title.trim()) L.push("title " + q(title));
 
@@ -801,13 +770,6 @@
     renderCards();
     renderTrans();
     renderRead();
-    var src = buildSource();
-    srcEl.textContent = src;
-    footEl.textContent =
-      items.length + (items.length === 1 ? " item" : " items") + " \u00B7 " +
-      trans.length + (trans.length === 1 ? " transition" : " transitions") +
-      /* the diagram is ours; the export format is what mermaid calls cynefin-beta */
-      " \u00B7 export format: mermaid cynefin-beta";
     draw();
     save();
   }
@@ -893,13 +855,10 @@
 
   titleInput.addEventListener("input", function(){
     title = titleInput.value;
-    var src = buildSource();
-    srcEl.textContent = src;
     draw();
     save();
   });
 
-  showDesc.addEventListener("change", commit);
 
   /* -- export / import ------------------------------------------------
      Plain browser download and file input, so this works on the file on disk.
@@ -924,19 +883,12 @@
       .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "cynefin-board";
   }
 
-  document.getElementById("exportBoard").addEventListener("click", function(){
-    var payload = {
-      format: FORMAT,
-      version: FORMAT_VERSION,
-      exportedAt: new Date().toISOString(),
-      title: title,
-      items: items.map(function(i){ return { id:i.id, t:i.t, d:i.d || null }; }),
-      trans: trans.map(function(t){ return { id:t.id, f:t.f, to:t.to, l:t.l || "" }; })
-    };
-    var stamp = payload.exportedAt.slice(0, 10);          /* ISO 8601 date */
-    var name = slug(title) + "-" + stamp + ".json";
+  /* one download path for both formats, so a fix to either reaches both */
+  function download(text, ext, type, note){
+    var stamp = new Date().toISOString().slice(0, 10);     /* ISO 8601 date */
+    var name = slug(title) + "-" + stamp + "." + ext;
     try{
-      var blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+      var blob = new Blob([text], { type:type });
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
       a.href = url; a.download = name;
@@ -945,13 +897,105 @@
       a.remove();
       setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
       say("Exported " + plural(items.length,"item") + " and " + plural(trans.length,"transition") +
-          " to " + name + ". If nothing downloaded, this page is in a sandbox that blocks it; open the local copy.");
+          " to " + name + (note ? ". " + note : "") +
+          ". If nothing downloaded, this page is in a sandbox that blocks it; open the local copy.");
     }catch(e){
       say("Could not build the export file: " + (e && e.message ? e.message : e), true);
     }
+  }
+
+  document.getElementById("exportBoard").addEventListener("click", function(){
+    download(JSON.stringify({
+      format: FORMAT,
+      version: FORMAT_VERSION,
+      exportedAt: new Date().toISOString(),
+      title: title,
+      items: items.map(function(i){ return { id:i.id, t:i.t, d:i.d || null }; }),
+      trans: trans.map(function(t){ return { id:t.id, f:t.f, to:t.to, l:t.l || "" }; })
+    }, null, 2), "json", "application/json");
+  });
+
+  document.getElementById("exportMmd").addEventListener("click", function(){
+    /* cynefin-beta has no place to put an item that is not in a domain, so say
+       so at the time rather than letting the unsorted tray vanish silently */
+    var loose = items.filter(function(i){ return !i.d; }).length;
+    download(buildSource(), "mmd", "text/plain", loose
+      ? plural(loose,"unsorted item") + " left out: cynefin-beta has no unsorted list"
+      : "");
   });
 
   /* Returns {items, trans, title} or throws with a reason the user can act on. */
+  /* Import takes either format and works out which from the content, not the
+     extension: a .txt holding cynefin-beta should still come in. */
+  function parseAny(text){
+    var head = text.replace(/^﻿/, "").trim();
+    if(head.charAt(0) === "{" || head.charAt(0) === "[") return parseBoard(text);
+    if(/^\s*cynefin-beta\b/m.test(text)) return parseMermaid(text);
+    throw new Error("that file is neither a Cynefin board nor cynefin-beta source");
+  }
+
+  /* Read back cynefin-beta. This parses what we write, and is deliberately
+     loose about the rest: unquoted item text, a colon after a domain name,
+     labels with or without quotes. Aporia and disorder come in as Confusion,
+     the two older names for the same centre domain.
+
+     What a .mmd cannot carry, because the format has nowhere to put it:
+     unsorted items, which have no domain to sit under. Those survive a JSON
+     round trip and are lost in a Mermaid one, which is why JSON is still the
+     format offered first. */
+  var MMD_ALIAS = { aporia:"confusion", disorder:"confusion" };
+  function parseMermaid(text){
+    var ok = {}; ORDER.forEach(function(k){ ok[k] = true; });
+    function domain(word){
+      var k = String(word).toLowerCase().replace(/:$/, "");
+      k = MMD_ALIAS[k] || k;
+      return ok[k] ? k : null;
+    }
+    function unquote(s){
+      s = s.trim();
+      var m = /^"([\s\S]*)"$/.exec(s) || /^'([\s\S]*)'$/.exec(s);
+      return (m ? m[1] : s).trim();
+    }
+
+    var lines = text.split(/\r?\n/);
+    var here = null, outItems = [], outTrans = [], outTitle = "", n = 1, m = 1, dropped = 0;
+
+    lines.forEach(function(raw){
+      /* directives and comments carry no board content */
+      var line = raw.replace(/^\s*%%\{[\s\S]*?\}%%\s*/, "").replace(/^\s*%%.*$/, "");
+      var t = line.trim();
+      if(!t) return;
+      if(/^cynefin-beta\b/.test(t)) { here = null; return; }
+
+      var mt = /^title\s+(.*)$/i.exec(t);
+      if(mt){ outTitle = unquote(mt[1]); return; }
+
+      /* a transition, before the domain test: "clear --> chaotic : why" */
+      var mx = /^(\w+)\s*-{1,2}>\s*(\w+)\s*(?::\s*(.*))?$/.exec(t);
+      if(mx){
+        var f = domain(mx[1]), to = domain(mx[2]);
+        if(f && to && f !== to){
+          outTrans.push({ id:"t" + (m++), f:f, to:to, l: mx[3] ? unquote(mx[3]) : "" });
+        } else dropped++;
+        return;
+      }
+
+      /* a bare domain name opens a block; anything else inside one is an item */
+      var d = domain(t);
+      if(d && !/^["']/.test(t)){ here = d; return; }
+
+      var body = unquote(t);
+      if(!body) return;
+      if(!here){ dropped++; return; }        /* an item outside any domain block */
+      outItems.push({ id:"i" + (n++), t:body, d:here });
+    });
+
+    if(!outItems.length && !outTrans.length)
+      throw new Error("no domains or transitions found in that cynefin-beta source");
+
+    return { title:outTitle, items:outItems, trans:outTrans, dropped:dropped };
+  }
+
   function parseBoard(text){
     var data;
     try{ data = JSON.parse(text); }
@@ -998,7 +1042,7 @@
     reader.onerror = function(){ say("Could not read that file.", true); };
     reader.onload = function(){
       var board;
-      try{ board = parseBoard(String(reader.result)); }
+      try{ board = parseAny(String(reader.result)); }
       catch(e){ say("Import failed: " + e.message + ".", true); return; }
 
       /* importing replaces the board, so confirm when there is work to lose */
@@ -1035,29 +1079,6 @@
   });
 
 
-  /* copy */
-  var copyBtn = document.getElementById("copyBtn");
-  copyBtn.addEventListener("click", function(){
-    var text = srcEl.textContent;
-    function flash(msg){
-      var was = copyBtn.textContent;
-      copyBtn.textContent = msg;
-      setTimeout(function(){ copyBtn.textContent = was; }, 1600);
-    }
-    function fallback(){
-      var r = document.createRange();
-      r.selectNodeContents(srcEl);
-      var sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(r);
-      var ok = false;
-      try{ ok = document.execCommand("copy"); }catch(e){}
-      flash(ok ? "Copied" : "Selected - press Ctrl+C");
-    }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(function(){ flash("Copied"); }, fallback);
-    } else { fallback(); }
-  });
 
   /* deselect */
   document.addEventListener("click", function(e){
