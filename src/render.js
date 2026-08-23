@@ -139,6 +139,10 @@ CX.build = (function(){
       placed[n.id] = { n:n, b:b, cx:pad + n.x*(W-pad*2), cy:pad + n.y*(H-pad*2) };
     });
     var out = [CX.svgOpen(W,H), CX.defs()];
+    /* Labels are collected separately and appended after every edge is drawn.
+       Drawn inline, an edge later in the list paints over the plate of a label
+       already placed, and the line reads as a strikethrough through the text. */
+    var labels = [];
 
     edges.forEach(function(e){
       var a = placed[e.from], b = placed[e.to];
@@ -165,12 +169,16 @@ CX.build = (function(){
         var t = (typeof e.labelT === "number") ? e.labelT : 0.5, mt = 1-t;
         var lx = mt*mt*p0[0] + 2*mt*t*qx + t*t*p1[0];
         var ly = mt*mt*p0[1] + 2*mt*t*qy + t*t*p1[1];
+        /* opaque, and --sunk to match the plate the diagram sits on: the label
+           has to erase the edge behind it, and a translucent --paper fill let
+           the line show through and read as a strikethrough */
         var lw = CX.textWidth(e.label, FLAB);
-        out.push('<rect x="'+CX.r2(lx-lw/2-4)+'" y="'+CX.r2(ly-9)+'" width="'+CX.r2(lw+8)+'" height="18" '+
-                 'rx="3" fill="var(--paper)" opacity="0.92"/>');
-        out.push(CX.textBlock([e.label], lx, ly, LAB, "var(--ink-2)", LINEH));
+        labels.push('<rect x="'+CX.r2(lx-lw/2-5)+'" y="'+CX.r2(ly-11)+'" width="'+CX.r2(lw+10)+'" height="22" '+
+                    'rx="3" fill="var(--sunk)"/>');
+        labels.push(CX.textBlock([e.label], lx, ly, LAB, "var(--ink-2)", LINEH));
       }
     });
+    out.push.apply(out, labels);
 
     nodes.forEach(function(n){
       var p = placed[n.id], b = p.b;

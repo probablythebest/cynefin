@@ -59,6 +59,9 @@ function scope(css, prefix) {
   return out;
 }
 
+const COMMENT = new RegExp('/\\*[\\s\\S]*?\\*/', 'g');
+const stripComments = s => s.replace(COMMENT, '');
+
 /* strip rules whose selector matches a predicate (used to drop each file's
    own token blocks and the builder's old top bar, replaced by shared CSS) */
 function dropRules(css, pred) {
@@ -76,7 +79,12 @@ function dropRules(css, pred) {
       if (css[j] === '{') depth++;
       else if (css[j] === '}') { depth--; if (depth === 0) break; }
     }
-    const head = css.slice(i, brace).trim();
+    /* A rule's prelude carries any comment that sits above it, because the loop
+       only skips a comment when one starts exactly at i. Strip comments before
+       testing the selector, or a commented token block silently survives. The
+       Learn pane's :root did exactly that, and its old palette overrode the
+       shared meaning-led one in light mode. */
+    const head = stripComments(css.slice(i, brace)).trim();
     const body = css.slice(brace + 1, j);
     if (pred(head, body)) { /* dropped */ }
     else if (/^@(media|supports)/i.test(head)) {

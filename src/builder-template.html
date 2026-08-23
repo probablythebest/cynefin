@@ -5,7 +5,6 @@
     --paper:#F0F1EC; --sheet:#F8F9F5; --sunk:#E7E9E2;
     --ink:#1B211E; --ink-2:#4E5A55; --muted:#7C8883; --rule:#CDD3CB;
     --shadow:0 1px 0 rgba(27,33,30,.05), 0 10px 24px -18px rgba(27,33,30,.5);
-    --inset-dim:none;
     --h-clear:#3B7A32; --h-complicated:#806E0C; --h-complex:#AD5510;
     --h-chaotic:#AF2723; --h-confusion:#5E6A64; --h-unplaced:#8D9791;
     --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Hoefler Text",Georgia,serif;
@@ -16,7 +15,6 @@
     --paper:#141815; --sheet:#1C221E; --sunk:#101413;
     --ink:#E9ECE5; --ink-2:#AAB5AF; --muted:#7F8B85; --rule:#2C3531;
     --shadow:0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
-    --inset-dim:brightness(.82) saturate(.95);
     --h-clear:#63BE55; --h-complicated:#DCC341; --h-complex:#E8913F;
     --h-chaotic:#E85C52; --h-confusion:#A6B0AA; --h-unplaced:#79837E;
     }
@@ -25,7 +23,6 @@
     --paper:#141815; --sheet:#1C221E; --sunk:#101413;
     --ink:#E9ECE5; --ink-2:#AAB5AF; --muted:#7F8B85; --rule:#2C3531;
     --shadow:0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
-    --inset-dim:brightness(.82) saturate(.95);
     --h-clear:#63BE55; --h-complicated:#DCC341; --h-complex:#E8913F;
     --h-chaotic:#E85C52; --h-confusion:#A6B0AA; --h-unplaced:#79837E;
   }
@@ -219,8 +216,8 @@
   .chk input{ accent-color:var(--ink); }
 
   .inset{
-    background:#EFEDE3; border-top:1px solid rgba(27,33,30,.14);
-    padding:18px 14px; overflow-x:auto; filter:var(--inset-dim); min-height:180px;
+    background:var(--sunk); border-top:1px solid var(--rule);
+    padding:18px 14px; overflow-x:auto; min-height:180px;
     display:flex; align-items:center; justify-content:center;
   }
   #dia{ width:100%; min-width:0; }
@@ -781,7 +778,8 @@
     footEl.textContent =
       items.length + (items.length === 1 ? " item" : " items") + " \u00B7 " +
       trans.length + (trans.length === 1 ? " transition" : " transitions") +
-      " \u00B7 mermaid " + "11.16.1" + " cynefin-beta, bundled in this page";
+      /* the diagram is ours; the export format is what mermaid calls cynefin-beta */
+      " \u00B7 export format: mermaid cynefin-beta";
     draw();
     save();
   }

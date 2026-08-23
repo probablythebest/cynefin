@@ -62,6 +62,11 @@ read the message before changing anything else.
 - `assemble.js` fails the build if an em or en dash reaches user-facing output,
   checking the raw characters, the HTML entities, the numeric entities, and the
   JavaScript escapes.
+- `merge.js` strips comments from a rule's prelude before testing its selector. The
+  parser only skips a comment that starts exactly where it is looking, so a comment
+  sitting above a rule ends up inside that rule's prelude. The Learn pane's `:root`
+  token block survived on that account and, coming last in the cascade, overrode the
+  shared meaning-led palette in light mode while dark mode looked correct.
 
 ### Editing the sources: geometry is sized against pre-rename text
 
@@ -100,6 +105,18 @@ accepting whatever a generic top-down layout produces.
 
 Mermaid's `cynefin-beta` syntax is still emitted as an export format. Generating
 that text costs nothing and keeps boards portable.
+
+Two rendering rules that are easy to break by accident:
+
+**The diagram plate is `--sunk`, in both panes.** It used to be a fixed light
+`#EFEDE3` with `filter: brightness(.82)` dropped over it in dark mode, which was
+scaffolding for a renderer that baked light colors into its SVG. Ours does not, so
+the plate is a normal themed surface. Edge labels paint an opaque `--sunk` plate to
+erase the line behind them, which only works while the two agree.
+
+**Edge labels are collected and appended after every edge is drawn.** Drawn inline,
+an edge later in the list paints over the plate of a label already placed, and the
+line reads as a strikethrough through the text.
 
 ## Diagram density
 

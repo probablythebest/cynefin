@@ -14,7 +14,6 @@
     --ink:#1B211E; --ink-2:#4E5A55; --muted:#7C8883; --rule:#CDD3CB;
     --plate:#E6E9E1; --plate-2:#DDE1D8;
     --shadow:0 1px 0 rgba(27,33,30,.05), 0 10px 24px -18px rgba(27,33,30,.5);
-    --inset-dim:none;
     /* meaning-led domain palette: clear=green complicated=yellow
        complex=orange chaotic=red confusion=grey */
     --h-clear:#3B7A32; --h-complicated:#806E0C; --h-complex:#AD5510;
@@ -29,7 +28,6 @@
       --ink:#E9ECE5; --ink-2:#AAB5AF; --muted:#7F8B85; --rule:#2C3531;
       --plate:#222925; --plate-2:#1D2420;
       --shadow:0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
-      --inset-dim:brightness(.82) saturate(.95);
       --h-clear:#63BE55; --h-complicated:#DCC341; --h-complex:#E8913F;
       --h-chaotic:#E85C52; --h-confusion:#A6B0AA; --h-unplaced:#79837E;
     }
@@ -39,7 +37,6 @@
     --ink:#E9ECE5; --ink-2:#AAB5AF; --muted:#7F8B85; --rule:#2C3531;
     --plate:#222925; --plate-2:#1D2420;
     --shadow:0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
-    --inset-dim:brightness(.82) saturate(.95);
     --h-clear:#63BE55; --h-complicated:#DCC341; --h-complex:#E8913F;
     --h-chaotic:#E85C52; --h-confusion:#A6B0AA; --h-unplaced:#79837E;
   }
@@ -126,14 +123,6 @@
   #build .read li{ min-width:0; }
   #build .lbl{ font-family:var(--sans); font-size:.66rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); font-weight:600; }
   #build .num{ font-variant-numeric:tabular-nums; }
-
-  /* -- Top bar ----------------------------------------------- */
-  #build .bar{
-    position:sticky; top:0; z-index:20;
-    background:var(--sheet); border-bottom:1px solid var(--rule);
-    display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center;
-    padding:11px clamp(12px,2.2vw,22px);
-  }
 
   /* -- Layout ------------------------------------------------ */
   #build .app{ display:flex; flex-direction:column; gap:18px; padding:clamp(12px,2.2vw,22px); }
@@ -283,8 +272,8 @@
   #build .chk input{ accent-color:var(--ink); }
 
   #build .inset{
-    background:#EFEDE3; border-top:1px solid rgba(27,33,30,.14);
-    padding:18px 14px; overflow-x:auto; filter:var(--inset-dim); min-height:180px;
+    background:var(--sunk); border-top:1px solid var(--rule);
+    padding:18px 14px; overflow-x:auto; min-height:180px;
     display:flex; align-items:center; justify-content:center;
   }
   #build #dia{ width:100%; min-width:0; }
@@ -312,36 +301,6 @@
 
   /* ===== Learn pane ===================================================== */
 
-  /* -- Tokens ----------------------------------------------------------- */
-  :root{
-    color-scheme: light dark;
-
-    --paper:  #F0F1EC;
-    --sheet:  #F8F9F5;
-    --ink:    #1B211E;
-    --ink-2:  #4E5A55;
-    --muted:  #7C8883;
-    --rule:   #CDD3CB;
-    --plate:  #E6E9E1;
-    --plate-2:#DDE1D8;
-    --shadow: 0 1px 0 rgba(27,33,30,.06), 0 12px 28px -18px rgba(27,33,30,.45);
-    --inset-dim: none;
-
-    --h-clear:       #A07717;
-    --h-complicated: #2F6485;
-    --h-complex:     #2C7A5D;
-    --h-chaotic:     #A63F26;
-    --h-confusion:      #5B5578;
-
-    --serif: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Hoefler Text",Georgia,serif;
-    --sans: "Avenir Next Condensed","Roboto Condensed","Helvetica Neue Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif;
-
-    --w: 1120px;
-    --prose: 68ch;
-  }
-
-  /* -- Base ------------------------------------------------------------- */
-  *{ box-sizing:border-box; }
   #learn .wrap{ max-width:var(--w); margin:0 auto; padding:0 24px; }
   #learn p{ margin:0 0 1em; }
   #learn a{ color:inherit; text-underline-offset:3px; text-decoration-thickness:1px; }
@@ -528,17 +487,15 @@
   #learn .here{ margin-top:20px; font-size:.94rem; color:var(--ink-2); }
   #learn .here b{ font-family:var(--sans); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:.35em; }
 
-  /* -- Mermaid insets --------------------------------------------------- */
+  /* -- Diagram plate --------------------------------------------------- */
   #learn .inset{
-    background:#EFEDE3;
-    border:1px solid rgba(27,33,30,.18);
+    background:var(--sunk);
+    border:1px solid var(--rule);
     border-radius:2px;
     padding:14px 12px;
     overflow-x:auto;
-    filter:var(--inset-dim);
-    box-shadow:inset 0 0 0 4px #EFEDE3, inset 0 0 22px rgba(27,33,30,.05);
+    box-shadow:inset 0 0 22px rgba(0,0,0,.05);
   }
-  #learn .inset pre.mermaid{ margin:0; background:none; text-align:center; font-size:.8rem; color:#1B211E; }
   #learn .stack{ position:relative; min-height:150px; margin:20px 0 4px; }
   #learn .stack > .inset{
     position:absolute; inset:0;
@@ -1287,6 +1244,10 @@ CX.build = (function(){
       placed[n.id] = { n:n, b:b, cx:pad + n.x*(W-pad*2), cy:pad + n.y*(H-pad*2) };
     });
     var out = [CX.svgOpen(W,H), CX.defs()];
+    /* Labels are collected separately and appended after every edge is drawn.
+       Drawn inline, an edge later in the list paints over the plate of a label
+       already placed, and the line reads as a strikethrough through the text. */
+    var labels = [];
 
     edges.forEach(function(e){
       var a = placed[e.from], b = placed[e.to];
@@ -1313,12 +1274,16 @@ CX.build = (function(){
         var t = (typeof e.labelT === "number") ? e.labelT : 0.5, mt = 1-t;
         var lx = mt*mt*p0[0] + 2*mt*t*qx + t*t*p1[0];
         var ly = mt*mt*p0[1] + 2*mt*t*qy + t*t*p1[1];
+        /* opaque, and --sunk to match the plate the diagram sits on: the label
+           has to erase the edge behind it, and a translucent --paper fill let
+           the line show through and read as a strikethrough */
         var lw = CX.textWidth(e.label, FLAB);
-        out.push('<rect x="'+CX.r2(lx-lw/2-4)+'" y="'+CX.r2(ly-9)+'" width="'+CX.r2(lw+8)+'" height="18" '+
-                 'rx="3" fill="var(--paper)" opacity="0.92"/>');
-        out.push(CX.textBlock([e.label], lx, ly, LAB, "var(--ink-2)", LINEH));
+        labels.push('<rect x="'+CX.r2(lx-lw/2-5)+'" y="'+CX.r2(ly-11)+'" width="'+CX.r2(lw+10)+'" height="22" '+
+                    'rx="3" fill="var(--sunk)"/>');
+        labels.push(CX.textBlock([e.label], lx, ly, LAB, "var(--ink-2)", LINEH));
       }
     });
+    out.push.apply(out, labels);
 
     nodes.forEach(function(n){
       var p = placed[n.id], b = p.b;
@@ -1840,7 +1805,8 @@ CX.board = function(opts){
     footEl.textContent =
       items.length + (items.length === 1 ? " item" : " items") + " \u00B7 " +
       trans.length + (trans.length === 1 ? " transition" : " transitions") +
-      " \u00B7 mermaid " + "11.16.1" + " cynefin-beta, bundled in this page";
+      /* the diagram is ours; the export format is what mermaid calls cynefin-beta */
+      " \u00B7 export format: mermaid cynefin-beta";
     draw();
     save();
   }
