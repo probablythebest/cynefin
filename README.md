@@ -86,20 +86,33 @@ they run.
 
 ## Diagram density
 
-`cynefin-beta` lays each domain out in a fixed-height band, so a busy board makes
-items collide. Two things keep it readable, both measured rather than guessed:
+`cynefin-beta` draws onto a fixed canvas, so a busy board overlaps unless the canvas
+grows with it. Both dimensions are scaled from the busiest domain:
 
-**The diagram width scales with the busiest domain.** At Mermaid's default 880, a
-21-item board produced 3 overlapping pairs; 1000 and above produced none. The width
-is now `760 + busiest * 90`, clamped to 880-1800, so it grows only as needed.
+```
+width  = clamp(880, 760 + busiest * 90,       1800)
+height = clamp(600, 600 + (busiest - 6) * 70, 2400)
+```
 
-**Past 10 items in one domain, no width helps.** Overlaps reappear at 11 and worsen
-from there, because the band height is fixed. So the diagram draws the first 9 and
-adds a "+ N more on the board" marker. The board itself always keeps every item;
-only the picture is capped, and it says so rather than silently hiding work or
-drawing a mess.
+**Height is the one that matters.** Width alone plateaus: 21 items per quadrant still
+collided 14 times at any width, because the overflow is vertical. Adding height clears
+it entirely. Measured overlapping item pairs, four quadrants filled evenly:
 
-If you need the whole thing rendered, split the board or export the JSON.
+| items per quadrant | default canvas | scaled canvas |
+|---|---|---|
+| 11 | 2 | 0 |
+| 14 | 8 | 0 |
+| 21 | 22 | 0 |
+| 30 | not measured | 0 |
+
+Nothing is capped: every item on the board is drawn. An earlier version capped each
+domain at 10 with a "+ N more" marker, on the false conclusion that 10 was a hard
+ceiling. That came from testing width only. Do not reintroduce a cap without
+re-measuring both dimensions.
+
+The Confusion ellipse is Mermaid's own exception: it shows three items and appends its
+own `+N more` badge. That is upstream behavior, not ours, and the canvas size does not
+affect it.
 
 ## Export and import
 
