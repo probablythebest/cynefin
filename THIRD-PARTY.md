@@ -1,22 +1,14 @@
 # Third-party notices
 
-This repository vendors one third-party library, unmodified, at
-`assets/mermaid.min.js`.
+**None.** This repository vendors no third-party code.
 
-## Mermaid 11.16.1
+The page previously bundled Mermaid to draw its diagrams. That was removed on
+2026-08-16 in favour of an original SVG renderer (`src/render.js`), written from
+scratch: no code, stylesheet, markup structure or layout algorithm was taken from
+Mermaid or any other diagram library.
 
-Diagram rendering. Licensed MIT, copyright Knut Sveidqvist and Mermaid
-contributors. <https://github.com/mermaid-js/mermaid>
+Mermaid's `cynefin-beta` **syntax** is still emitted by the Build tab as an export
+format, so a board can be pasted into any Mermaid-capable tool. That is text
+generation for interoperability, not use of their implementation.
 
-The distributed bundle embeds further libraries, each retaining its own
-`@license` header inside the file. The one requiring separate mention:
-
-## DOMPurify 3.4.0
-
-HTML sanitizer, bundled inside Mermaid. Copyright Cure53 and contributors,
-released under the Apache License 2.0 and the Mozilla Public License 2.0.
-<https://github.com/cure53/DOMPurify>
-
-Everything else in this repository is the author's own work, licensed MIT; see
-LICENSE. The MIT grant there applies to that work only, not to the vendored file
-above, which keeps the terms stated here.
+Everything here is the author's own work, licensed MIT; see LICENSE.

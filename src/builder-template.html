@@ -224,9 +224,8 @@
     display:flex; align-items:center; justify-content:center;
   }
   #dia{ width:100%; min-width:0; }
-  /* mermaid writes an inline max-width onto the svg, which pins the diagram at its
-     intrinsic size in a wider pane. Override it so the diagram scales to the window,
-     and cap the height so a tall board still fits on screen. */
+  /* our SVG sets its own viewBox and scales to the pane; cap the height so a
+     tall board still fits on screen */
   #dia svg{
     display:block; margin:0 auto;
     width:100% !important;
@@ -385,16 +384,13 @@
 </div>
 
 
-<script>/*__MERMAID_BUNDLE__*/</script>
-<script>window.__MM__ = window.mermaid;</script>
 
 <script>
 (function(){
   "use strict";
 
-  var MM = window.__MM__;
   var KEY = "cynefin-builder-v2";
-  /* ordered to unordered: drives the 1-5 shortcuts, the tally, and the mermaid
+  /* ordered to unordered: drives the 1-5 shortcuts, the tally, and the export
      emission order, so they all agree with the stacked board order */
   var ORDER = ["clear","complicated","complex","chaotic","confusion"];
 
@@ -697,7 +693,9 @@
     });
   }
 
-  /* -- mermaid source (cynefin-beta) ----------------------- */
+  /* -- Mermaid source, kept as a portable EXPORT format ------
+     We no longer render with Mermaid; this emits its syntax so a board can be
+     pasted into any Mermaid-capable tool. Generating text costs nothing. */
   function q(s){
     return String(s).replace(/"/g, "'").replace(/[\r\n]+/g, " ").trim();
   }
@@ -707,8 +705,7 @@
      collided 14 times at any width. Adding height clears it completely - measured
      0 overlapping pairs at 21 per quadrant (1800x1650) and still 0 at 30 per
      quadrant. So nothing is capped here; every item is drawn.
-     The Confusion ellipse is Mermaid's own exception: it shows 3 and appends its
-     own "+N more" badge. That is upstream behavior, not ours. */
+     Our renderer draws every item, so nothing is capped. */
   function buildSource(){
     var L = [];
     var counts  = ORDER.map(function(k){ return byDomain(k).length; });
@@ -747,55 +744,31 @@
   /* A long item label makes cynefin-beta draw its box wider than the diagram,
      spilling past the viewBox origin where it is silently clipped. Refit the
      viewBox to the real content box so nothing is lost. */
-  function fit(){
-    var svg = diaEl.querySelector("svg");
-    if(!svg) return;
-    var b;
-    try{ b = svg.getBBox(); }catch(e){ return; }
-    if(!b || !isFinite(b.width) || b.width <= 0 || b.height <= 0) return;  /* hidden pane reads 0 */
-    var pad = 14;
-    svg.setAttribute("viewBox",
-      (b.x - pad) + " " + (b.y - pad) + " " + (b.width + pad*2) + " " + (b.height + pad*2));
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    svg.removeAttribute("height");
-  }
 
-  function draw(src){
-    if(!MM || typeof MM.render !== "function"){
-      errEl.hidden = false;
-      errEl.textContent = "Mermaid did not load, so the diagram is unavailable. The Mermaid source tab still works.";
-      return;
-    }
-    var token = ++rid;
-    var id = "cyn-" + token;
-    var p;
+  /* Rendered by our own SVG builder (CX.board), not a diagram library. It is
+     synchronous, so there is no render race and no token guard needed, and it
+     draws straight from the board data rather than from generated source. */
+  function draw(){
     try{
-      p = MM.render(id, src);
-    }catch(e){
-      showErr(e); return;
-    }
-    if(p && typeof p.then === "function"){
-      p.then(function(res){
-        if(token !== rid) return;
-        diaEl.innerHTML = res.svg;
-        fit();
-        errEl.hidden = true;
-      }, function(e){
-        if(token !== rid) return;
-        showErr(e);
+      diaEl.innerHTML = CX.board({
+        order: ORDER,
+        names: { clear:"Clear", complicated:"Complicated", complex:"Complex",
+                 chaotic:"Chaotic", confusion:"Confusion" },
+        hues:  { clear:"var(--h-clear)", complicated:"var(--h-complicated)",
+                 complex:"var(--h-complex)", chaotic:"var(--h-chaotic)",
+                 confusion:"var(--h-confusion)" },
+        items: ORDER.reduce(function(acc,k){
+                 acc[k] = byDomain(k).map(function(i){ return i.t; }); return acc; }, {}),
+        transitions: trans.filter(function(t){ return t.f !== t.to; }),
+        title: title.trim()
       });
-    } else if(p && p.svg){
-      diaEl.innerHTML = p.svg;
-      fit();
       errEl.hidden = true;
-    }
+    }catch(e){ showErr(e); }
   }
 
   function showErr(e){
     errEl.hidden = false;
-    errEl.textContent = "Mermaid could not draw this board: " + (e && e.message ? e.message : String(e));
-    var stray = document.getElementById("dcyn-" + rid);
-    if(stray && stray.parentNode) stray.parentNode.removeChild(stray);
+    errEl.textContent = "The diagram could not be drawn: " + (e && e.message ? e.message : String(e));
   }
 
   /* -- commit ---------------------------------------------- */
@@ -809,7 +782,7 @@
       items.length + (items.length === 1 ? " item" : " items") + " \u00B7 " +
       trans.length + (trans.length === 1 ? " transition" : " transitions") +
       " \u00B7 mermaid " + "11.16.1" + " cynefin-beta, bundled in this page";
-    draw(src);
+    draw();
     save();
   }
 
@@ -896,7 +869,7 @@
     title = titleInput.value;
     var src = buildSource();
     srcEl.textContent = src;
-    draw(src);
+    draw();
     save();
   });
 
@@ -1046,7 +1019,6 @@
     tabS.setAttribute("aria-selected", d ? "false" : "true");
     paneD.hidden = !d;
     paneS.hidden = d;
-    if(d) fit();   /* getBBox reads 0 while the pane is hidden, so refit on the way back */
   }
   tabD.addEventListener("click", function(){ pick("diagram"); });
   tabS.addEventListener("click", function(){ pick("source"); });
@@ -1088,21 +1060,6 @@
   });
 
   /* -- boot ------------------------------------------------ */
-  if(MM && typeof MM.initialize === "function"){
-    MM.initialize({
-      startOnLoad: false,
-      securityLevel: "strict",
-      theme: "base",
-      fontFamily: 'Georgia, "Iowan Old Style", Palatino, serif',
-      themeVariables: {
-        fontSize: "14px",
-        lineColor: "#5B6862",
-        primaryTextColor: "#1B211E",
-        textColor: "#1B211E"
-      },
-      cynefin: { showDomainDescriptions: false }
-    });
-  }
 
   if(!load()) loadExample();
   titleInput.value = title;

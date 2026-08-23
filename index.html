@@ -101,24 +101,11 @@
   .io-note[data-bad="true"]{ color:var(--ink); font-weight:600; }
   .btn[disabled]:hover{ color:var(--ink-2); border-color:var(--rule); }
 
-  /* learn diagrams are rendered from <pre class="mmd-src"> by the bundled mermaid */
-  #learn pre.mmd-src{ display:none; }
-  #learn .mmd{ width:100%; }
-  #learn .mmd svg{ max-width:100%; height:auto; display:block; margin:0 auto; }
+  /* diagrams are our own SVG and use the page CSS variables directly, so no
+     light-paper inset or brightness filter is needed to make them theme. */
+  .mmd{ width:100%; }
+  .mmd svg{ max-width:100%; height:auto; display:block; margin:0 auto; }
 
-  /* Mermaid measures each label with its own font and sizes the box to fit BEFORE
-     the SVG reaches the page. Any page typography applied afterward makes the text
-     outgrow its box and clip. Mermaid emits class="label" of its own, so quarantine
-     both diagram containers from inherited text styling. */
-  #learn .mmd, #build #dia{ font-family:Georgia, "Iowan Old Style", Palatino, serif; }
-  #learn .mmd .label, #learn .mmd .nodeLabel, #learn .mmd .edgeLabel,
-  #learn .mmd text, #learn .mmd tspan, #learn .mmd foreignObject div, #learn .mmd span,
-  #build #dia .label, #build #dia .nodeLabel, #build #dia .edgeLabel,
-  #build #dia text, #build #dia tspan, #build #dia foreignObject div, #build #dia span{
-    text-transform:none !important;
-    letter-spacing:normal !important;
-    font-family:inherit !important;
-  }
 
   @media (prefers-reduced-motion:reduce){ *{ transition-duration:.001ms !important; animation-duration:.001ms !important; } }
 
@@ -301,9 +288,8 @@
     display:flex; align-items:center; justify-content:center;
   }
   #build #dia{ width:100%; min-width:0; }
-  /* mermaid writes an inline max-width onto the svg, which pins the diagram at its
-     intrinsic size in a wider pane. Override it so the diagram scales to the window,
-     and cap the height so a tall board still fits on screen. */
+  /* our SVG sets its own viewBox and scales to the pane; cap the height so a
+     tall board still fits on screen */
   #build #dia svg{
     display:block; margin:0 auto;
     width:100% !important;
@@ -781,6 +767,7 @@
 
 
 
+
 </div>
 
 <div id="learn" role="tabpanel" aria-labelledby="tabLearn" hidden>
@@ -947,62 +934,19 @@
 
             <div class="stack" id="stack">
               <div class="inset" data-for="clear">
-<pre class="mmd-src">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Sense"] --> B["Categorize"] --> C["Respond"]
-  C -.-> D["Best practice"]
-  classDef s fill:#EDF4EA,stroke:#3B7A32,stroke-width:1.6px,color:#1B211E
-  classDef o fill:#D6E7CF,stroke:#3B7A32,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-  class D o
-</pre>
+<div class="mmd" data-dia="triad-clear"></div>
               </div>
               <div class="inset" data-for="complicated">
-<pre class="mmd-src">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Sense"] --> B["Analyze"] --> C["Respond"]
-  C -.-> D["Good practice"]
-  classDef s fill:#F5F2DF,stroke:#806E0C,stroke-width:1.6px,color:#1B211E
-  classDef o fill:#EAE4BE,stroke:#806E0C,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-  class D o
-</pre>
+<div class="mmd" data-dia="triad-complicated"></div>
               </div>
               <div class="inset" data-for="complex">
-<pre class="mmd-src">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Probe"] --> B["Sense"] --> C["Respond"]
-  C -.-> D["Emergent practice"]
-  C -.->|"amplify or dampen"| A
-  classDef s fill:#F8EFE5,stroke:#AD5510,stroke-width:1.6px,color:#1B211E
-  classDef o fill:#F0DCC4,stroke:#AD5510,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-  class D o
-</pre>
+<div class="mmd" data-dia="triad-complex"></div>
               </div>
               <div class="inset" data-for="chaotic">
-<pre class="mmd-src">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Act"] --> B["Sense"] --> C["Respond"]
-  C -.-> D["Novel practice"]
-  classDef s fill:#F8E9E8,stroke:#AF2723,stroke-width:1.6px,color:#1B211E
-  classDef o fill:#EFCECB,stroke:#AF2723,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-  class D o
-</pre>
+<div class="mmd" data-dia="triad-chaotic"></div>
               </div>
               <div class="inset" data-for="confusion">
-<pre class="mmd-src">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Break it<br/>into parts"] --> B["Place each part"] --> C["Act per domain"]
-  classDef s fill:#EDEFEE,stroke:#5E6A64,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-</pre>
+<div class="mmd" data-dia="triad-confusion"></div>
               </div>
             </div>
             <div class="inset-cap">Decision sequence</div>
@@ -1040,28 +984,7 @@ flowchart LR
 
       <div class="two">
         <div class="inset" style="align-self:start;">
-<pre class="mmd-src">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"13px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart TD
-  CH["Chaotic"] -->|"stabilize first"| CX["Complex"]
-  CX -->|"patterns hold, codify"| CD["Complicated"]
-  CD -->|"habit hardens"| CL["Clear"]
-  CL -.->|"complacency: the fall"| CH
-  CL -->|"the rule stops working"| CD
-  CX -.->|"deliberate shallow dive"| CH
-  AP(["Confusion"]) -.-> CX
-  AP -.-> CD
-  classDef ch fill:#F8E9E8,stroke:#AF2723,stroke-width:1.6px,color:#1B211E
-  classDef cx fill:#F8EFE5,stroke:#AD5510,stroke-width:1.6px,color:#1B211E
-  classDef cd fill:#F5F2DF,stroke:#806E0C,stroke-width:1.6px,color:#1B211E
-  classDef cl fill:#EDF4EA,stroke:#3B7A32,stroke-width:1.6px,color:#1B211E
-  classDef ap fill:#EDEFEE,stroke:#5E6A64,stroke-width:1.6px,color:#1B211E
-  class CH ch
-  class CX cx
-  class CD cd
-  class CL cl
-  class AP ap
-</pre>
+<div class="mmd" data-dia="movement"></div>
         </div>
 
         <ul class="moves">
@@ -1118,27 +1041,7 @@ flowchart TD
 
         <div>
           <div class="inset">
-<pre class="mmd-src">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"13px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart TD
-  Q{"How does cause<br/>and effect behave?"}
-  Q -->|"obvious to everyone"| CL["Clear"]
-  Q -->|"an expert can work it out"| CD["Complicated"]
-  Q -->|"only visible in hindsight"| CX["Complex"]
-  Q -->|"no time to even ask"| CH["Chaotic"]
-  Q -->|"I honestly cannot tell"| AP(["Confusion"])
-  AP -.->|"split the situation up<br/>and ask again per part"| Q
-  classDef ch fill:#F8E9E8,stroke:#AF2723,stroke-width:1.6px,color:#1B211E
-  classDef cx fill:#F8EFE5,stroke:#AD5510,stroke-width:1.6px,color:#1B211E
-  classDef cd fill:#F5F2DF,stroke:#806E0C,stroke-width:1.6px,color:#1B211E
-  classDef cl fill:#EDF4EA,stroke:#3B7A32,stroke-width:1.6px,color:#1B211E
-  classDef ap fill:#EDEFEE,stroke:#5E6A64,stroke-width:1.6px,color:#1B211E
-  class CH ch
-  class CX cx
-  class CD cd
-  class CL cl
-  class AP ap
-</pre>
+<div class="mmd" data-dia="orientation"></div>
           </div>
           <div class="inset-cap">The sorting question</div>
           <p style="margin-top:22px;color:var(--ink-2);font-size:.97rem;">
@@ -1242,21 +1145,311 @@ flowchart TD
 
 </div>
 
-<!-- Mermaid is vendored rather than inlined so the browser caches it separately:
-     the page is ~27 KB gzipped, the library ~948 KB. Editing the page no longer
-     invalidates the library. Plain src, NOT defer: the inline scripts below are
-     not deferred, so a deferred library would load after them and __MM__ would
-     be undefined. Relative path, so file:// and a project Pages path both work. -->
-<script src="assets/mermaid.min.js"></script>
-<script>window.__MM__ = window.mermaid;</script>
 
+<script>/* ------------------------------------------------------------------------
+   Original SVG diagram renderer for this page. Written from scratch: no code,
+   CSS, markup structure or layout algorithm taken from any diagram library.
+
+   Two things this buys over a general-purpose library. Colours come from the
+   page's own CSS custom properties, so the diagrams theme themselves in light
+   and dark instead of needing a light "paper" inset with a brightness filter.
+   And text is measured for real with a canvas, so boxes fit their labels
+   rather than being sized from an estimate.
+   ------------------------------------------------------------------------ */
+var CX = (function(){
+  "use strict";
+
+  var _ctx = null;
+  function ctx(){
+    if(!_ctx) _ctx = document.createElement("canvas").getContext("2d");
+    return _ctx;
+  }
+  /* Real measurement, not an estimate. Every clipping bug in this project came
+     from a width that was guessed instead of measured. */
+  function textWidth(s, font){ var c = ctx(); c.font = font; return c.measureText(String(s)).width; }
+
+  function esc(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+                    .replace(/"/g,"&quot;");
+  }
+
+  /* greedy wrap on whole words, falling back to a hard break for a word that
+     cannot fit on a line by itself */
+  function wrap(text, font, maxW){
+    var words = String(text).split(/\s+/).filter(Boolean), lines = [], cur = "";
+    for(var i=0;i<words.length;i++){
+      var next = cur ? cur + " " + words[i] : words[i];
+      if(textWidth(next, font) <= maxW || !cur){
+        if(textWidth(next, font) > maxW && !cur){
+          var w = words[i];
+          while(textWidth(w, font) > maxW && w.length > 1){
+            var cut = w.length - 1;
+            while(cut > 1 && textWidth(w.slice(0,cut), font) > maxW) cut--;
+            lines.push(w.slice(0,cut)); w = w.slice(cut);
+          }
+          cur = w;
+        } else cur = next;
+      } else { lines.push(cur); cur = words[i]; }
+    }
+    if(cur) lines.push(cur);
+    return lines;
+  }
+
+  function r2(n){ return Math.round(n*100)/100; }
+
+  /* a rounded rectangle as an explicit path, so no rx/ry rounding surprises */
+  function roundRect(x,y,w,h,r){
+    r = Math.min(r, h/2, w/2);
+    return "M"+r2(x+r)+" "+r2(y)+
+           "h"+r2(w-2*r)+"a"+r2(r)+" "+r2(r)+" 0 0 1 "+r2(r)+" "+r2(r)+
+           "v"+r2(h-2*r)+"a"+r2(r)+" "+r2(r)+" 0 0 1 "+r2(-r)+" "+r2(r)+
+           "h"+r2(-(w-2*r))+"a"+r2(r)+" "+r2(r)+" 0 0 1 "+r2(-r)+" "+r2(-r)+
+           "v"+r2(-(h-2*r))+"a"+r2(r)+" "+r2(r)+" 0 0 1 "+r2(r)+" "+r2(-r)+"z";
+  }
+
+  /* one arrowhead definition, referenced by every edge */
+  function defs(){
+    return '<defs><marker id="cx-ah" viewBox="0 0 10 10" refX="9" refY="5" '+
+           'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'+
+           '<path d="M0 0L10 5L0 10z" fill="var(--ink-2)"/></marker></defs>';
+  }
+
+  function svgOpen(w,h){
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+r2(w)+' '+r2(h)+'" '+
+           'width="100%" height="auto" role="img" style="display:block;max-width:'+Math.ceil(w)+'px;margin:0 auto">';
+  }
+
+  /* a text block, already wrapped, centred in a box */
+  function textBlock(lines, cx, cy, font, fill, lineH){
+    var total = (lines.length-1)*lineH;
+    return lines.map(function(l,i){
+      return '<text x="'+r2(cx)+'" y="'+r2(cy - total/2 + i*lineH)+'" text-anchor="middle" '+
+             'dominant-baseline="central" font-family="'+font.family+'" font-size="'+font.size+'" '+
+             'fill="'+fill+'">'+esc(l)+'</text>';
+    }).join("");
+  }
+
+  return { textWidth:textWidth, esc:esc, wrap:wrap, r2:r2, roundRect:roundRect,
+           defs:defs, svgOpen:svgOpen, textBlock:textBlock };
+})();
+
+/* ---- diagram builders -------------------------------------------------- */
+CX.build = (function(){
+  "use strict";
+  var SERIF = 'Georgia, "Iowan Old Style", Palatino, serif';
+  var F     = { family: SERIF, size: "13px" };
+  var FONT  = '13px ' + SERIF;          // the string canvas measures with
+  var FLAB  = '11px ' + SERIF;
+  var LAB   = { family: SERIF, size: "11px" };
+  var PADX = 14, PADY = 9, LINEH = 18, RAD = 4, GAP = 34;
+
+  function boxFor(label, maxW){
+    var lines = CX.wrap(label, FONT, maxW || 220);
+    var w = Math.max.apply(null, lines.map(function(l){ return CX.textWidth(l, FONT); })) + PADX*2;
+    var h = lines.length*LINEH + PADY*2;
+    return { lines:lines, w:Math.ceil(w), h:Math.ceil(h) };
+  }
+
+  /* A left-to-right chain of steps, used for the per-domain decision sequence.
+     Optional trailing step drawn with a dashed connector (the practice it yields). */
+  function chain(steps, hue){
+    var boxes = steps.map(function(s){ return boxFor(s.t, 200); });
+    var h = Math.max.apply(null, boxes.map(function(b){ return b.h; }));
+    var w = boxes.reduce(function(a,b){ return a+b.w; }, 0) + GAP*(boxes.length-1);
+    var pad = 6, W = w + pad*2, H = h + pad*2;
+    var out = [CX.svgOpen(W,H), CX.defs()], x = pad, cy = pad + h/2;
+
+    boxes.forEach(function(b,i){
+      var s = steps[i], dashed = !!s.dashed;
+      if(i > 0){
+        var x0 = x - GAP + 4, x1 = x - 5;
+        out.push('<path d="M'+CX.r2(x0)+' '+CX.r2(cy)+'H'+CX.r2(x1)+'" stroke="var(--ink-2)" '+
+                 'stroke-width="1.3" fill="none" marker-end="url(#cx-ah)"'+
+                 (dashed ? ' stroke-dasharray="4 3"' : '')+'/>');
+      }
+      out.push('<path d="'+CX.roundRect(x, pad+(h-b.h)/2, b.w, b.h, RAD)+'" '+
+               'fill="var(--sheet)" stroke="'+hue+'" stroke-width="1.5"/>');
+      out.push(CX.textBlock(b.lines, x+b.w/2, cy, F, "var(--ink)", LINEH));
+      x += b.w + GAP;
+    });
+    out.push("</svg>");
+    return out.join("");
+  }
+
+  /* Hand-positioned node graph. Positions are given as fractions of the canvas,
+     so the caller places nodes where they mean something rather than accepting
+     whatever a generic layout produces. */
+  function graph(nodes, edges, W, H){
+    var pad = 8;
+    var placed = {};
+    nodes.forEach(function(n){
+      var b = boxFor(n.label, n.maxW || 150);
+      placed[n.id] = { n:n, b:b, cx:pad + n.x*(W-pad*2), cy:pad + n.y*(H-pad*2) };
+    });
+    var out = [CX.svgOpen(W,H), CX.defs()];
+
+    edges.forEach(function(e){
+      var a = placed[e.from], b = placed[e.to];
+      if(!a || !b) return;
+      var dx = b.cx-a.cx, dy = b.cy-a.cy, len = Math.hypot(dx,dy) || 1;
+      /* stop the line at each box edge rather than its centre */
+      function edgePoint(p, sx, sy){
+        var hw = p.b.w/2 + 6, hh = p.b.h/2 + 6;
+        var tx = sx ? hw/Math.abs(sx) : Infinity, ty = sy ? hh/Math.abs(sy) : Infinity;
+        var t = Math.min(tx, ty);
+        return [p.cx + sx*t, p.cy + sy*t];
+      }
+      var ux = dx/len, uy = dy/len;
+      var p0 = edgePoint(a, ux, uy), p1 = edgePoint(b, -ux, -uy);
+      var mx = (p0[0]+p1[0])/2, my = (p0[1]+p1[1])/2;
+      var bow = (e.bow || 0);
+      var qx = mx - uy*bow, qy = my + ux*bow;
+      out.push('<path d="M'+CX.r2(p0[0])+' '+CX.r2(p0[1])+'Q'+CX.r2(qx)+' '+CX.r2(qy)+' '+
+               CX.r2(p1[0])+' '+CX.r2(p1[1])+'" fill="none" stroke="var(--ink-2)" stroke-width="1.3" '+
+               'marker-end="url(#cx-ah)"'+(e.dashed?' stroke-dasharray="5 4"':'')+'/>');
+      if(e.label){
+        /* quadratic bezier at t; bidirectional pairs pass different t so their
+           labels separate along the edge instead of sitting on top of each other */
+        var t = (typeof e.labelT === "number") ? e.labelT : 0.5, mt = 1-t;
+        var lx = mt*mt*p0[0] + 2*mt*t*qx + t*t*p1[0];
+        var ly = mt*mt*p0[1] + 2*mt*t*qy + t*t*p1[1];
+        var lw = CX.textWidth(e.label, FLAB);
+        out.push('<rect x="'+CX.r2(lx-lw/2-4)+'" y="'+CX.r2(ly-9)+'" width="'+CX.r2(lw+8)+'" height="18" '+
+                 'rx="3" fill="var(--paper)" opacity="0.92"/>');
+        out.push(CX.textBlock([e.label], lx, ly, LAB, "var(--ink-2)", LINEH));
+      }
+    });
+
+    nodes.forEach(function(n){
+      var p = placed[n.id], b = p.b;
+      out.push('<path d="'+CX.roundRect(p.cx-b.w/2, p.cy-b.h/2, b.w, b.h, n.round? b.h/2 : RAD)+'" '+
+               'fill="var(--sheet)" stroke="'+(n.hue||"var(--rule)")+'" stroke-width="1.6"/>');
+      out.push(CX.textBlock(b.lines, p.cx, p.cy, F, "var(--ink)", LINEH));
+    });
+    out.push("</svg>");
+    return out.join("");
+  }
+
+  return { chain:chain, graph:graph, boxFor:boxFor, FONT:FONT };
+})();
+
+/* ---- the Cynefin board ------------------------------------------------- */
+/* Original layout. The four ordered/unordered domains sit as quadrants with
+   Confusion at the centre, matching the geometry the Learn map already uses,
+   so the two tabs agree. Every item is drawn: the panel grows to fit rather
+   than the canvas being fixed and the contents colliding. */
+CX.board = function(opts){
+  "use strict";
+  var order  = opts.order;            // ["clear","complicated","complex","chaotic","confusion"]
+  var names  = opts.names;            // { clear:"Clear", ... }
+  var hues   = opts.hues;             // { clear:"var(--h-clear)", ... }
+  var items  = opts.items;            // { clear:[str,...], ... }
+  var trans  = opts.transitions||[];  // [{f,to,l}]
+  var title  = opts.title||"";
+
+  var SERIF = 'Georgia, "Iowan Old Style", Palatino, serif';
+  var SANS  = '"Avenir Next Condensed","Roboto Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif';
+  var ITEMF = '12.5px ' + SERIF, HEADF = '600 11px ' + SANS, TITF = '15px ' + SERIF;
+  var IT = {family:SERIF,size:"12.5px"}, HD = {family:SANS,size:"11px"}, TT = {family:SERIF,size:"15px"};
+
+  var COLW = 300, MIDW = 210, GAP = 18, PAD = 16;
+  var ITEMH = 24, ITEMGAP = 6, HEADH = 30, ROWPAD = 14;
+
+  /* quadrant column heights are driven by their own contents */
+  function stackH(list){ return list.length ? list.length*ITEMH + (list.length-1)*ITEMGAP : 18; }
+  var topH = Math.max(stackH(items.complex||[]), stackH(items.complicated||[]));
+  var botH = Math.max(stackH(items.chaotic||[]), stackH(items.clear||[]));
+  var panelTop = HEADH + ROWPAD + topH + ROWPAD;
+  var panelBot = HEADH + ROWPAD + botH + ROWPAD;
+  var confH    = HEADH + ROWPAD + stackH(items.confusion||[]) + ROWPAD;
+
+  var titleH = title ? 30 : 0;
+  var W = PAD*2 + COLW*2 + MIDW + GAP*2;
+  var H = PAD*2 + titleH + panelTop + GAP + panelBot;
+  var midY = PAD + titleH + panelTop + GAP/2;
+
+  var out = [CX.svgOpen(W,H), CX.defs()];
+  if(title){
+    out.push(CX.textBlock([title], W/2, PAD+15, TT, "var(--ink)", 18));
+  }
+
+  var col = { left: PAD, mid: PAD+COLW+GAP, right: PAD+COLW+GAP+MIDW+GAP };
+  var rowY = { top: PAD+titleH, bottom: PAD+titleH+panelTop+GAP };
+
+  var place = {
+    complex:     {x:col.left,  y:rowY.top,    w:COLW, h:panelTop},
+    complicated: {x:col.right, y:rowY.top,    w:COLW, h:panelTop},
+    chaotic:     {x:col.left,  y:rowY.bottom, w:COLW, h:panelBot},
+    clear:       {x:col.right, y:rowY.bottom, w:COLW, h:panelBot},
+    confusion:   {x:col.mid,   y:midY-confH/2, w:MIDW, h:confH}
+  };
+
+  /* transitions first, so panels sit on top of the lines */
+  trans.forEach(function(t){
+    var a = place[t.f], b = place[t.to];
+    if(!a || !b) return;
+    var ax = a.x+a.w/2, ay = a.y+a.h/2, bx = b.x+b.w/2, by = b.y+b.h/2;
+    var dx = bx-ax, dy = by-ay, len = Math.hypot(dx,dy)||1, ux=dx/len, uy=dy/len;
+    function edge(p, sx, sy){
+      var hw=p.w/2+8, hh=p.h/2+8;
+      var t1 = sx ? hw/Math.abs(sx) : Infinity, t2 = sy ? hh/Math.abs(sy) : Infinity;
+      var k = Math.min(t1,t2);
+      return [p.x+p.w/2 + sx*k, p.y+p.h/2 + sy*k];
+    }
+    var p0 = edge(a,ux,uy), p1 = edge(b,-ux,-uy);
+    var mx=(p0[0]+p1[0])/2, my=(p0[1]+p1[1])/2, bow=26;
+    var qx = mx - uy*bow, qy = my + ux*bow;
+    out.push('<path d="M'+CX.r2(p0[0])+' '+CX.r2(p0[1])+'Q'+CX.r2(qx)+' '+CX.r2(qy)+' '+
+             CX.r2(p1[0])+' '+CX.r2(p1[1])+'" fill="none" stroke="var(--ink-2)" stroke-width="1.3" '+
+             'opacity="0.75" marker-end="url(#cx-ah)"/>');
+    if(t.l){
+      var lx=(p0[0]+2*qx+p1[0])/4, ly=(p0[1]+2*qy+p1[1])/4;
+      var lw=CX.textWidth(t.l, '11px '+SERIF);
+      out.push('<rect x="'+CX.r2(lx-lw/2-5)+'" y="'+CX.r2(ly-9)+'" width="'+CX.r2(lw+10)+'" height="18" '+
+               'rx="3" fill="var(--paper)" opacity="0.94"/>');
+      out.push(CX.textBlock([t.l], lx, ly, {family:SERIF,size:"11px"}, "var(--ink-2)", 14));
+    }
+  });
+
+  order.forEach(function(k){
+    var p = place[k], hue = hues[k], list = items[k]||[];
+    out.push('<path d="'+CX.roundRect(p.x,p.y,p.w,p.h,6)+'" fill="var(--sheet)" stroke="var(--rule)" stroke-width="1"/>');
+    out.push('<path d="M'+CX.r2(p.x+6)+' '+CX.r2(p.y+1)+'h'+CX.r2(p.w-12)+'" stroke="'+hue+'" stroke-width="3"/>');
+    out.push('<text x="'+CX.r2(p.x+14)+'" y="'+CX.r2(p.y+20)+'" font-family="'+SANS+'" font-size="11px" '+
+             'font-weight="600" letter-spacing="1.6" fill="'+hue+'">'+CX.esc(names[k].toUpperCase())+'</text>');
+    out.push('<text x="'+CX.r2(p.x+p.w-14)+'" y="'+CX.r2(p.y+20)+'" text-anchor="end" font-family="'+SANS+
+             '" font-size="11px" fill="var(--muted)">'+list.length+'</text>');
+
+    var y = p.y + HEADH + ROWPAD;
+    list.forEach(function(txt){
+      var maxW = p.w - 28 - 10;
+      var line = txt, tw = CX.textWidth(line, ITEMF);
+      if(tw > maxW){                       /* single line, ellipsised to fit exactly */
+        while(line.length > 1 && CX.textWidth(line + "\u2026", ITEMF) > maxW) line = line.slice(0,-1);
+        line = line.replace(/\s+$/,"") + "\u2026";
+      }
+      out.push('<path d="'+CX.roundRect(p.x+14, y, p.w-28, ITEMH-2, 3)+'" fill="var(--paper)" stroke="var(--rule)" stroke-width="1"/>');
+      out.push('<path d="M'+CX.r2(p.x+14)+' '+CX.r2(y+2)+'v'+CX.r2(ITEMH-6)+'" stroke="'+hue+'" stroke-width="2.5"/>');
+      out.push('<text x="'+CX.r2(p.x+24)+'" y="'+CX.r2(y+(ITEMH-2)/2)+'" dominant-baseline="central" '+
+               'font-family="'+SERIF+'" font-size="12.5px" fill="var(--ink)">'+CX.esc(line)+'</text>');
+      y += ITEMH + ITEMGAP;
+    });
+    if(!list.length){
+      out.push('<text x="'+CX.r2(p.x+14)+'" y="'+CX.r2(p.y+HEADH+ROWPAD+10)+'" font-family="'+SERIF+
+               '" font-size="12px" font-style="italic" fill="var(--muted)">nothing here</text>');
+    }
+  });
+
+  out.push("</svg>");
+  return out.join("");
+};
+</script>
 <script>
 (function(){
   "use strict";
 
-  var MM = window.__MM__;
   var KEY = "cynefin-builder-v2";
-  /* ordered to unordered: drives the 1-5 shortcuts, the tally, and the mermaid
+  /* ordered to unordered: drives the 1-5 shortcuts, the tally, and the export
      emission order, so they all agree with the stacked board order */
   var ORDER = ["clear","complicated","complex","chaotic","confusion"];
 
@@ -1559,7 +1752,9 @@ flowchart TD
     });
   }
 
-  /* -- mermaid source (cynefin-beta) ----------------------- */
+  /* -- Mermaid source, kept as a portable EXPORT format ------
+     We no longer render with Mermaid; this emits its syntax so a board can be
+     pasted into any Mermaid-capable tool. Generating text costs nothing. */
   function q(s){
     return String(s).replace(/"/g, "'").replace(/[\r\n]+/g, " ").trim();
   }
@@ -1569,8 +1764,7 @@ flowchart TD
      collided 14 times at any width. Adding height clears it completely - measured
      0 overlapping pairs at 21 per quadrant (1800x1650) and still 0 at 30 per
      quadrant. So nothing is capped here; every item is drawn.
-     The Confusion ellipse is Mermaid's own exception: it shows 3 and appends its
-     own "+N more" badge. That is upstream behavior, not ours. */
+     Our renderer draws every item, so nothing is capped. */
   function buildSource(){
     var L = [];
     var counts  = ORDER.map(function(k){ return byDomain(k).length; });
@@ -1609,55 +1803,31 @@ flowchart TD
   /* A long item label makes cynefin-beta draw its box wider than the diagram,
      spilling past the viewBox origin where it is silently clipped. Refit the
      viewBox to the real content box so nothing is lost. */
-  function fit(){
-    var svg = diaEl.querySelector("svg");
-    if(!svg) return;
-    var b;
-    try{ b = svg.getBBox(); }catch(e){ return; }
-    if(!b || !isFinite(b.width) || b.width <= 0 || b.height <= 0) return;  /* hidden pane reads 0 */
-    var pad = 14;
-    svg.setAttribute("viewBox",
-      (b.x - pad) + " " + (b.y - pad) + " " + (b.width + pad*2) + " " + (b.height + pad*2));
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    svg.removeAttribute("height");
-  }
 
-  function draw(src){
-    if(!MM || typeof MM.render !== "function"){
-      errEl.hidden = false;
-      errEl.textContent = "Mermaid did not load, so the diagram is unavailable. The Mermaid source tab still works.";
-      return;
-    }
-    var token = ++rid;
-    var id = "cyn-" + token;
-    var p;
+  /* Rendered by our own SVG builder (CX.board), not a diagram library. It is
+     synchronous, so there is no render race and no token guard needed, and it
+     draws straight from the board data rather than from generated source. */
+  function draw(){
     try{
-      p = MM.render(id, src);
-    }catch(e){
-      showErr(e); return;
-    }
-    if(p && typeof p.then === "function"){
-      p.then(function(res){
-        if(token !== rid) return;
-        diaEl.innerHTML = res.svg;
-        fit();
-        errEl.hidden = true;
-      }, function(e){
-        if(token !== rid) return;
-        showErr(e);
+      diaEl.innerHTML = CX.board({
+        order: ORDER,
+        names: { clear:"Clear", complicated:"Complicated", complex:"Complex",
+                 chaotic:"Chaotic", confusion:"Confusion" },
+        hues:  { clear:"var(--h-clear)", complicated:"var(--h-complicated)",
+                 complex:"var(--h-complex)", chaotic:"var(--h-chaotic)",
+                 confusion:"var(--h-confusion)" },
+        items: ORDER.reduce(function(acc,k){
+                 acc[k] = byDomain(k).map(function(i){ return i.t; }); return acc; }, {}),
+        transitions: trans.filter(function(t){ return t.f !== t.to; }),
+        title: title.trim()
       });
-    } else if(p && p.svg){
-      diaEl.innerHTML = p.svg;
-      fit();
       errEl.hidden = true;
-    }
+    }catch(e){ showErr(e); }
   }
 
   function showErr(e){
     errEl.hidden = false;
-    errEl.textContent = "Mermaid could not draw this board: " + (e && e.message ? e.message : String(e));
-    var stray = document.getElementById("dcyn-" + rid);
-    if(stray && stray.parentNode) stray.parentNode.removeChild(stray);
+    errEl.textContent = "The diagram could not be drawn: " + (e && e.message ? e.message : String(e));
   }
 
   /* -- commit ---------------------------------------------- */
@@ -1671,7 +1841,7 @@ flowchart TD
       items.length + (items.length === 1 ? " item" : " items") + " \u00B7 " +
       trans.length + (trans.length === 1 ? " transition" : " transitions") +
       " \u00B7 mermaid " + "11.16.1" + " cynefin-beta, bundled in this page";
-    draw(src);
+    draw();
     save();
   }
 
@@ -1758,7 +1928,7 @@ flowchart TD
     title = titleInput.value;
     var src = buildSource();
     srcEl.textContent = src;
-    draw(src);
+    draw();
     save();
   });
 
@@ -1908,7 +2078,6 @@ flowchart TD
     tabS.setAttribute("aria-selected", d ? "false" : "true");
     paneD.hidden = !d;
     paneS.hidden = d;
-    if(d) fit();   /* getBBox reads 0 while the pane is hidden, so refit on the way back */
   }
   tabD.addEventListener("click", function(){ pick("diagram"); });
   tabS.addEventListener("click", function(){ pick("source"); });
@@ -1950,21 +2119,6 @@ flowchart TD
   });
 
   /* -- boot ------------------------------------------------ */
-  if(MM && typeof MM.initialize === "function"){
-    MM.initialize({
-      startOnLoad: false,
-      securityLevel: "strict",
-      theme: "base",
-      fontFamily: 'Georgia, "Iowan Old Style", Palatino, serif',
-      themeVariables: {
-        fontSize: "14px",
-        lineColor: "#5B6862",
-        primaryTextColor: "#1B211E",
-        textColor: "#1B211E"
-      },
-      cynefin: { showDomainDescriptions: false }
-    });
-  }
 
   if(!load()) loadExample();
   titleInput.value = title;
@@ -2248,31 +2402,76 @@ flowchart TD
     qBtns.appendChild(again);
   }
 
+  /* ---- Learn diagrams, drawn by our own renderer (CX) ------------------
+     The movement graph places the domains in the real Cynefin geometry
+     (Complex and Complicated on top, Chaotic and Clear below, Confusion in
+     the middle) so it agrees with the terrain map above it, rather than in
+     whatever order a generic top-down layout would pick. */
+  var H = { clear:"var(--h-clear)", complicated:"var(--h-complicated)",
+            complex:"var(--h-complex)", chaotic:"var(--h-chaotic)",
+            confusion:"var(--h-confusion)" };
+
+  var DIAGRAMS = {
+    "triad-clear":       function(){ return CX.build.chain(
+      [{t:"Sense"},{t:"Categorize"},{t:"Respond"},{t:"Best practice",dashed:true}], H.clear); },
+    "triad-complicated": function(){ return CX.build.chain(
+      [{t:"Sense"},{t:"Analyze"},{t:"Respond"},{t:"Good practice",dashed:true}], H.complicated); },
+    "triad-complex":     function(){ return CX.build.chain(
+      [{t:"Probe"},{t:"Sense"},{t:"Respond"},{t:"Emergent practice",dashed:true}], H.complex); },
+    "triad-chaotic":     function(){ return CX.build.chain(
+      [{t:"Act"},{t:"Sense"},{t:"Respond"},{t:"Novel practice",dashed:true}], H.chaotic); },
+    "triad-confusion":   function(){ return CX.build.chain(
+      [{t:"Break it into parts"},{t:"Place each part"},{t:"Act per domain"}], H.confusion); },
+
+    "movement": function(){
+      return CX.build.graph(
+        [{id:"CX",label:"Complex",     x:0.17,y:0.16,hue:H.complex},
+         {id:"CD",label:"Complicated", x:0.83,y:0.16,hue:H.complicated},
+         {id:"CH",label:"Chaotic",     x:0.17,y:0.84,hue:H.chaotic},
+         {id:"CL",label:"Clear",       x:0.83,y:0.84,hue:H.clear},
+         {id:"AP",label:"Confusion",   x:0.50,y:0.50,hue:H.confusion,round:true}],
+        [{from:"CH",to:"CX",label:"stabilize first",         bow:-34, labelT:0.30},
+         {from:"CX",to:"CH",label:"deliberate shallow dive", bow: 34, dashed:true, labelT:0.30},
+         {from:"CX",to:"CD",label:"patterns hold, codify",   bow:-26},
+         {from:"CD",to:"CL",label:"habit hardens",           bow:-34, labelT:0.30},
+         {from:"CL",to:"CD",label:"the rule stops working",  bow: 34, labelT:0.30},
+         {from:"CL",to:"CH",label:"complacency: the fall",   bow: 26, dashed:true},
+         {from:"AP",to:"CX",dashed:true},
+         {from:"AP",to:"CD",dashed:true}],
+        740, 470);
+    },
+
+    "orientation": function(){
+      return CX.build.graph(
+        [{id:"Q", label:"How does cause and effect behave?", x:0.13,y:0.50,maxW:130},
+         {id:"CL",label:"Clear",      x:0.86,y:0.08,hue:H.clear},
+         {id:"CD",label:"Complicated",x:0.86,y:0.29,hue:H.complicated},
+         {id:"CX",label:"Complex",    x:0.86,y:0.50,hue:H.complex},
+         {id:"CH",label:"Chaotic",    x:0.86,y:0.71,hue:H.chaotic},
+         {id:"AP",label:"Confusion",  x:0.86,y:0.92,hue:H.confusion,round:true}],
+        [{from:"Q",to:"CL",label:"obvious to everyone"},
+         {from:"Q",to:"CD",label:"an expert can work it out"},
+         {from:"Q",to:"CX",label:"only visible in hindsight"},
+         {from:"Q",to:"CH",label:"no time to even ask"},
+         {from:"Q",to:"AP",label:"I honestly cannot tell"}],
+        780, 400);
+    }
+  };
+
+  function drawDiagrams(){
+    Array.prototype.forEach.call(document.querySelectorAll("#learn .mmd[data-dia]"), function(el){
+      var f = DIAGRAMS[el.getAttribute("data-dia")];
+      if(f) try{ el.innerHTML = f(); }catch(e){ el.textContent = "diagram unavailable"; }
+    });
+  }
+  drawDiagrams();
+
+
   renderQ1();
 })();
 </script>
 
 <script>
-/* ---- render the Learn diagrams with the bundled mermaid --------------- */
-(function(){
-  var MM = window.__MM__;
-  if(!MM || typeof MM.render !== "function") return;
-  var pres = document.querySelectorAll("#learn pre.mmd-src");
-  Array.prototype.forEach.call(pres, function(pre, i){
-    var src = pre.textContent;
-    var done = function(res){
-      var d = document.createElement("div");
-      d.className = "mmd";
-      d.innerHTML = res.svg;
-      if(pre.parentNode) pre.parentNode.replaceChild(d, pre);
-    };
-    try{
-      var p = MM.render("lrn" + i, src);
-      if(p && typeof p.then === "function") p.then(done, function(){});
-      else if(p && p.svg) done(p);
-    }catch(e){}
-  });
-})();
 
 /* ---- Build / Learn switch -------------------------------------------- */
 (function(){

@@ -23,8 +23,8 @@ without a `<base>` tag. `.nojekyll` keeps Jekyll out of the way.
 
 ```
 index.html              the built page, committed so a clone opens with no toolchain
-assets/mermaid.min.js   Mermaid 11.16.1, vendored
 src/
+  render.js             original SVG diagram renderer, no dependencies
   explainer.html        source for the Learn tab
   builder-template.html source for the Build tab
   merge.js              reconciles the two into one document
@@ -73,46 +73,46 @@ overflowed unnoticed. If you re-fit anything anchored to a label, check the labe
 `merge.js` emits, not the one in the source file. The Learn terrain map is the only
 place with hand-placed SVG text.
 
-## Why Mermaid is vendored, not inlined
+## Diagrams are drawn by our own renderer
 
-Mermaid loads from `assets/` as a separate file so the browser caches it
-independently. The page is about 28 KB gzipped; the library is about 948 KB. Split
-this way, a repeat visit re-fetches only the page, and editing the page does not
-invalidate the library.
+`src/render.js` builds every diagram as SVG. It is original work with no
+dependencies: no code, stylesheet, markup structure or layout algorithm from
+Mermaid or any other diagram library. Mermaid was removed on 2026-08-16, taking
+the payload from about 985 KB gzipped to about 32 KB.
 
-It is a plain `<script src>`, deliberately not `defer`: the inline scripts after it
-are not deferred, so a deferred library would load after them and be missing when
-they run.
+Two things this buys beyond size.
+
+**The diagrams theme themselves.** Colours are `var(--h-clear)`, `var(--ink)` and
+so on, read straight from the page. The old approach needed a light "paper" inset
+with a brightness filter over it in dark mode, because the library baked light
+colours into its output.
+
+**Text is measured, not estimated.** `CX.textWidth` uses a canvas to measure the
+real string in the real font, so boxes fit their labels and long item text is
+ellipsised at exactly the width available. Every clipping bug in this project's
+history came from a width that was guessed.
+
+The three builders: `CX.build.chain` for the per-domain decision sequences,
+`CX.build.graph` for hand-positioned node graphs, and `CX.board` for the Cynefin
+board itself. Node positions in `graph` are given as fractions of the canvas, so
+the movement diagram places the domains in the real Cynefin geometry rather than
+accepting whatever a generic top-down layout produces.
+
+Mermaid's `cynefin-beta` syntax is still emitted as an export format. Generating
+that text costs nothing and keeps boards portable.
 
 ## Diagram density
 
-`cynefin-beta` draws onto a fixed canvas, so a busy board overlaps unless the canvas
-grows with it. Both dimensions are scaled from the busiest domain:
+There is no density limit and nothing is capped. Panels grow to fit their
+contents, so items cannot collide: a 33-item board renders with zero overlapping
+chips and zero text outside the canvas, and adding more just makes the board
+taller.
 
-```
-width  = clamp(880, 760 + busiest * 90,       1800)
-height = clamp(600, 600 + (busiest - 6) * 70, 2400)
-```
+Item labels wider than their column are ellipsised at the measured width, so a
+long label shortens rather than escaping its box.
 
-**Height is the one that matters.** Width alone plateaus: 21 items per quadrant still
-collided 14 times at any width, because the overflow is vertical. Adding height clears
-it entirely. Measured overlapping item pairs, four quadrants filled evenly:
-
-| items per quadrant | default canvas | scaled canvas |
-|---|---|---|
-| 11 | 2 | 0 |
-| 14 | 8 | 0 |
-| 21 | 22 | 0 |
-| 30 | not measured | 0 |
-
-Nothing is capped: every item on the board is drawn. An earlier version capped each
-domain at 10 with a "+ N more" marker, on the false conclusion that 10 was a hard
-ceiling. That came from testing width only. Do not reintroduce a cap without
-re-measuring both dimensions.
-
-The Confusion ellipse is Mermaid's own exception: it shows three items and appends its
-own `+N more` badge. That is upstream behavior, not ours, and the canvas size does not
-affect it.
+This replaced a fixed-canvas library whose quadrants overlapped once a domain got
+busy, and which needed hand-fitted width and height formulas to stay legible.
 
 ## Export and import
 
@@ -159,12 +159,13 @@ Mermaid's `cynefin-beta` keyword, so what you see matches what you emit, but the
 prose names both. In particular `merge.js` must NOT rename "stay in aporia
 deliberately" to confusion: staying deliberately is by definition aporia.
 
-**Page CSS must not restyle Mermaid output.** Mermaid measures each label with its
-own font and sizes the box to fit before the SVG reaches the page, so any typography
-applied afterward makes text outgrow its box and clip. Mermaid emits `class="label"`
-of its own, which is why the Learn pane's section eyebrows use `.eyebrow` rather than
-`.label`, and why both diagram containers are quarantined with `text-transform: none`
-and `letter-spacing: normal`.
+**Diagram SVG sets its own type; do not restyle it from page CSS.** The renderer
+measures each label with a canvas and sizes the box to fit, so page typography applied
+afterward would make text outgrow the box it was measured for. Set font on the diagram
+through `render.js`, not through a selector that reaches into the SVG. The old
+quarantine rules for a third-party renderer are gone, along with the class collision
+that made the Learn eyebrows `.eyebrow` rather than `.label`; that rename stays, since
+nothing is served by undoing it.
 
 **Learn opens on Clear**, set in three places that must agree: the boot call
 `select("clear")` and the panel's static `data-domain` and heading, which are what
@@ -178,7 +179,5 @@ build. Copy is US English.
 The framework is Dave Snowden's; this is a secondary summary, not a Cynefin Co.
 publication. See the Provenance section on the Learn tab.
 
-Licensed MIT, see [LICENSE](LICENSE). That covers the work in this repository: the
-page, the sources in `src/`, and the docs. It does **not** relicense
-`assets/mermaid.min.js`, which is vendored third-party code and keeps its own terms;
-those are recorded in [THIRD-PARTY.md](THIRD-PARTY.md).
+Licensed MIT, see [LICENSE](LICENSE). It covers everything in the repository:
+no third-party code is vendored any more, as [THIRD-PARTY.md](THIRD-PARTY.md) records.

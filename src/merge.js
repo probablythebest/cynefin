@@ -100,7 +100,7 @@ function split(f) {
 const L = split('explainer.html');
 const B = split('builder-template.html');
 
-/* ── 1. Learn: Aporia -> Confusion, matching the builder and mermaid ────── */
+/* ── 1. Learn: Aporia -> Confusion, matching the builder ────── */
 let lcss = L.css, lrest = L.rest;
 const apToConf = s => s
   .replace(/--h-aporia/g, '--h-confusion')
@@ -136,32 +136,16 @@ lrest = lrest
      framework, since confusion is precisely the state you have not chosen. */
   .replace(/<span class="lbl">Aporia<\/span>/g, '<span class="lbl">Confusion</span>');
 
-/* ── 2. Learn: mermaid colors -> the meaning-led palette ────────────────
-   clear=green complicated=yellow complex=orange chaotic=red confusion=grey */
-const MM_COLORS = [
-  [/fill:#F7F4EA,stroke:#A07717/g, 'fill:#EDF4EA,stroke:#3B7A32'],  // clear
-  [/fill:#EDE0BF,stroke:#A07717/g, 'fill:#D6E7CF,stroke:#3B7A32'],
-  [/fill:#EEF3F6,stroke:#2F6485/g, 'fill:#F5F2DF,stroke:#806E0C'],  // complicated
-  [/fill:#D5E4EE,stroke:#2F6485/g, 'fill:#EAE4BE,stroke:#806E0C'],
-  [/fill:#EBF4F0,stroke:#2C7A5D/g, 'fill:#F8EFE5,stroke:#AD5510'],  // complex
-  [/fill:#CDE6DC,stroke:#2C7A5D/g, 'fill:#F0DCC4,stroke:#AD5510'],
-  [/fill:#F8EDE9,stroke:#A63F26/g, 'fill:#F8E9E8,stroke:#AF2723'],  // chaotic
-  [/fill:#EFD3C9,stroke:#A63F26/g, 'fill:#EFCECB,stroke:#AF2723'],
-  [/fill:#F0EEF5,stroke:#5B5578/g, 'fill:#EDEFEE,stroke:#5E6A64'],  // confusion
-];
-for (const [re, to] of MM_COLORS) lrest = lrest.replace(re, to);
 
-/* ── 3. Learn: render mermaid with the bundled copy, not the host runtime ─ */
-lrest = lrest.replace(/<pre class="mermaid">/g, '<pre class="mmd-src">');
 
 /* The transforms above are exact-string matches against the source pages, so any
    later edit to that copy can silently stop one applying. Fail loudly instead. */
 for (const needle of ['in its passive mode; aporia is the active one', 'name: "Confusion"',
-                      'data-for="confusion"', 'class="mmd-src"']) {
+                      'data-for="confusion"']) {
   if (!lrest.includes(needle)) throw new Error('learn transform did not apply: ' + needle);
 }
 for (const stale of ['formerly Disorder', 'data-domain="aporia"', '--h-aporia',
-                     'data-for="aporia"', 'class="mermaid"']) {
+                     'data-for="aporia"']) {
   if (lrest.includes(stale)) throw new Error('learn transform left stale text: ' + stale);
 }
 
@@ -211,9 +195,8 @@ for (const id of ['loadEg', 'clearAll', 'boardTitle']) {
 if (!/class="board"/.test(buildHtml)) throw new Error('board lost from build pane');
 if (!/class="app"/.test(buildHtml)) throw new Error('app lost from build pane');
 
-/* scripts: learn IIFE, build IIFE (strip the bundle placeholder line) */
+/* scripts: learn IIFE, build IIFE */
 const buildScript = bb.scripts
-  .replace(/<script>\/\*__MERMAID_BUNDLE__\*\/<\/script>\s*/, '')
   .replace(/<script>window\.__MM__ = window\.mermaid;<\/script>\s*/, '');
 
 fs.writeFileSync('merged-parts.json', JSON.stringify({

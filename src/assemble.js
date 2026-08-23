@@ -1,6 +1,7 @@
 /* Assemble ../index.html from the scoped parts merge.js produced. */
 const fs = require('fs');
 const P = JSON.parse(fs.readFileSync('merged-parts.json', 'utf8'));
+const RENDER_JS = fs.readFileSync('render.js', 'utf8');   // our own SVG renderer, inlined
 
 /* Make the page encoding-proof: it must render correctly even if it is ever
    served without a charset header. CSS non-ASCII is comment-only rule art;
@@ -112,24 +113,11 @@ const SHARED_CSS = `
   .io-note[data-bad="true"]{ color:var(--ink); font-weight:600; }
   .btn[disabled]:hover{ color:var(--ink-2); border-color:var(--rule); }
 
-  /* learn diagrams are rendered from <pre class="mmd-src"> by the bundled mermaid */
-  #learn pre.mmd-src{ display:none; }
-  #learn .mmd{ width:100%; }
-  #learn .mmd svg{ max-width:100%; height:auto; display:block; margin:0 auto; }
+  /* diagrams are our own SVG and use the page CSS variables directly, so no
+     light-paper inset or brightness filter is needed to make them theme. */
+  .mmd{ width:100%; }
+  .mmd svg{ max-width:100%; height:auto; display:block; margin:0 auto; }
 
-  /* Mermaid measures each label with its own font and sizes the box to fit BEFORE
-     the SVG reaches the page. Any page typography applied afterward makes the text
-     outgrow its box and clip. Mermaid emits class="label" of its own, so quarantine
-     both diagram containers from inherited text styling. */
-  #learn .mmd, #build #dia{ font-family:Georgia, "Iowan Old Style", Palatino, serif; }
-  #learn .mmd .label, #learn .mmd .nodeLabel, #learn .mmd .edgeLabel,
-  #learn .mmd text, #learn .mmd tspan, #learn .mmd foreignObject div, #learn .mmd span,
-  #build #dia .label, #build #dia .nodeLabel, #build #dia .edgeLabel,
-  #build #dia text, #build #dia tspan, #build #dia foreignObject div, #build #dia span{
-    text-transform:none !important;
-    letter-spacing:normal !important;
-    font-family:inherit !important;
-  }
 
   @media (prefers-reduced-motion:reduce){ *{ transition-duration:.001ms !important; animation-duration:.001ms !important; } }
 `;
@@ -179,39 +167,13 @@ ${P.buildHtml}
 ${P.learnHtml}
 </div>
 
-<!-- Mermaid is vendored rather than inlined so the browser caches it separately:
-     the page is ~27 KB gzipped, the library ~948 KB. Editing the page no longer
-     invalidates the library. Plain src, NOT defer: the inline scripts below are
-     not deferred, so a deferred library would load after them and __MM__ would
-     be undefined. Relative path, so file:// and a project Pages path both work. -->
-<script src="assets/mermaid.min.js"></script>
-<script>window.__MM__ = window.mermaid;</script>
 `;
 
 const TAIL = `
+<script>${RENDER_JS}</script>
 ${P.buildScript}
 ${P.learnScript}
 <script>
-/* ---- render the Learn diagrams with the bundled mermaid --------------- */
-(function(){
-  var MM = window.__MM__;
-  if(!MM || typeof MM.render !== "function") return;
-  var pres = document.querySelectorAll("#learn pre.mmd-src");
-  Array.prototype.forEach.call(pres, function(pre, i){
-    var src = pre.textContent;
-    var done = function(res){
-      var d = document.createElement("div");
-      d.className = "mmd";
-      d.innerHTML = res.svg;
-      if(pre.parentNode) pre.parentNode.replaceChild(d, pre);
-    };
-    try{
-      var p = MM.render("lrn" + i, src);
-      if(p && typeof p.then === "function") p.then(done, function(){});
-      else if(p && p.svg) done(p);
-    }catch(e){}
-  });
-})();
 
 /* ---- Build / Learn switch -------------------------------------------- */
 (function(){

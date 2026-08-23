@@ -513,62 +513,19 @@
 
             <div class="stack" id="stack">
               <div class="inset" data-for="clear">
-<pre class="mermaid">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Sense"] --> B["Categorize"] --> C["Respond"]
-  C -.-> D["Best practice"]
-  classDef s fill:#F7F4EA,stroke:#A07717,stroke-width:1.6px,color:#1B211E
-  classDef o fill:#EDE0BF,stroke:#A07717,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-  class D o
-</pre>
+<div class="mmd" data-dia="triad-clear"></div>
               </div>
               <div class="inset" data-for="complicated">
-<pre class="mermaid">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Sense"] --> B["Analyze"] --> C["Respond"]
-  C -.-> D["Good practice"]
-  classDef s fill:#EEF3F6,stroke:#2F6485,stroke-width:1.6px,color:#1B211E
-  classDef o fill:#D5E4EE,stroke:#2F6485,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-  class D o
-</pre>
+<div class="mmd" data-dia="triad-complicated"></div>
               </div>
               <div class="inset" data-for="complex">
-<pre class="mermaid">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Probe"] --> B["Sense"] --> C["Respond"]
-  C -.-> D["Emergent practice"]
-  C -.->|"amplify or dampen"| A
-  classDef s fill:#EBF4F0,stroke:#2C7A5D,stroke-width:1.6px,color:#1B211E
-  classDef o fill:#CDE6DC,stroke:#2C7A5D,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-  class D o
-</pre>
+<div class="mmd" data-dia="triad-complex"></div>
               </div>
               <div class="inset" data-for="chaotic">
-<pre class="mermaid">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Act"] --> B["Sense"] --> C["Respond"]
-  C -.-> D["Novel practice"]
-  classDef s fill:#F8EDE9,stroke:#A63F26,stroke-width:1.6px,color:#1B211E
-  classDef o fill:#EFD3C9,stroke:#A63F26,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-  class D o
-</pre>
+<div class="mmd" data-dia="triad-chaotic"></div>
               </div>
               <div class="inset" data-for="aporia">
-<pre class="mermaid">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"14px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart LR
-  A["Break it<br/>into parts"] --> B["Place each part"] --> C["Act per domain"]
-  classDef s fill:#F0EEF5,stroke:#5B5578,stroke-width:1.6px,color:#1B211E
-  class A,B,C s
-</pre>
+<div class="mmd" data-dia="triad-confusion"></div>
               </div>
             </div>
             <div class="inset-cap">Decision sequence</div>
@@ -606,28 +563,7 @@ flowchart LR
 
       <div class="two">
         <div class="inset" style="align-self:start;">
-<pre class="mermaid">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"13px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart TD
-  CH["Chaotic"] -->|"stabilize first"| CX["Complex"]
-  CX -->|"patterns hold, codify"| CD["Complicated"]
-  CD -->|"habit hardens"| CL["Clear"]
-  CL -.->|"complacency: the fall"| CH
-  CL -->|"the rule stops working"| CD
-  CX -.->|"deliberate shallow dive"| CH
-  AP(["Aporia"]) -.-> CX
-  AP -.-> CD
-  classDef ch fill:#F8EDE9,stroke:#A63F26,stroke-width:1.6px,color:#1B211E
-  classDef cx fill:#EBF4F0,stroke:#2C7A5D,stroke-width:1.6px,color:#1B211E
-  classDef cd fill:#EEF3F6,stroke:#2F6485,stroke-width:1.6px,color:#1B211E
-  classDef cl fill:#F7F4EA,stroke:#A07717,stroke-width:1.6px,color:#1B211E
-  classDef ap fill:#F0EEF5,stroke:#5B5578,stroke-width:1.6px,color:#1B211E
-  class CH ch
-  class CX cx
-  class CD cd
-  class CL cl
-  class AP ap
-</pre>
+<div class="mmd" data-dia="movement"></div>
         </div>
 
         <ul class="moves">
@@ -684,27 +620,7 @@ flowchart TD
 
         <div>
           <div class="inset">
-<pre class="mermaid">
-%%{init:{"theme":"base","themeVariables":{"fontFamily":"Georgia, serif","fontSize":"13px","lineColor":"#5B6862","primaryTextColor":"#1B211E"}}}%%
-flowchart TD
-  Q{"How does cause<br/>and effect behave?"}
-  Q -->|"obvious to everyone"| CL["Clear"]
-  Q -->|"an expert can work it out"| CD["Complicated"]
-  Q -->|"only visible in hindsight"| CX["Complex"]
-  Q -->|"no time to even ask"| CH["Chaotic"]
-  Q -->|"I honestly cannot tell"| AP(["Aporia"])
-  AP -.->|"split the situation up<br/>and ask again per part"| Q
-  classDef ch fill:#F8EDE9,stroke:#A63F26,stroke-width:1.6px,color:#1B211E
-  classDef cx fill:#EBF4F0,stroke:#2C7A5D,stroke-width:1.6px,color:#1B211E
-  classDef cd fill:#EEF3F6,stroke:#2F6485,stroke-width:1.6px,color:#1B211E
-  classDef cl fill:#F7F4EA,stroke:#A07717,stroke-width:1.6px,color:#1B211E
-  classDef ap fill:#F0EEF5,stroke:#5B5578,stroke-width:1.6px,color:#1B211E
-  class CH ch
-  class CX cx
-  class CD cd
-  class CL cl
-  class AP ap
-</pre>
+<div class="mmd" data-dia="orientation"></div>
           </div>
           <div class="inset-cap">The sorting question</div>
           <p style="margin-top:22px;color:var(--ink-2);font-size:.97rem;">
@@ -1080,6 +996,71 @@ flowchart TD
     qBtns.appendChild(show);
     qBtns.appendChild(again);
   }
+
+  /* ---- Learn diagrams, drawn by our own renderer (CX) ------------------
+     The movement graph places the domains in the real Cynefin geometry
+     (Complex and Complicated on top, Chaotic and Clear below, Confusion in
+     the middle) so it agrees with the terrain map above it, rather than in
+     whatever order a generic top-down layout would pick. */
+  var H = { clear:"var(--h-clear)", complicated:"var(--h-complicated)",
+            complex:"var(--h-complex)", chaotic:"var(--h-chaotic)",
+            confusion:"var(--h-confusion)" };
+
+  var DIAGRAMS = {
+    "triad-clear":       function(){ return CX.build.chain(
+      [{t:"Sense"},{t:"Categorize"},{t:"Respond"},{t:"Best practice",dashed:true}], H.clear); },
+    "triad-complicated": function(){ return CX.build.chain(
+      [{t:"Sense"},{t:"Analyze"},{t:"Respond"},{t:"Good practice",dashed:true}], H.complicated); },
+    "triad-complex":     function(){ return CX.build.chain(
+      [{t:"Probe"},{t:"Sense"},{t:"Respond"},{t:"Emergent practice",dashed:true}], H.complex); },
+    "triad-chaotic":     function(){ return CX.build.chain(
+      [{t:"Act"},{t:"Sense"},{t:"Respond"},{t:"Novel practice",dashed:true}], H.chaotic); },
+    "triad-confusion":   function(){ return CX.build.chain(
+      [{t:"Break it into parts"},{t:"Place each part"},{t:"Act per domain"}], H.confusion); },
+
+    "movement": function(){
+      return CX.build.graph(
+        [{id:"CX",label:"Complex",     x:0.17,y:0.16,hue:H.complex},
+         {id:"CD",label:"Complicated", x:0.83,y:0.16,hue:H.complicated},
+         {id:"CH",label:"Chaotic",     x:0.17,y:0.84,hue:H.chaotic},
+         {id:"CL",label:"Clear",       x:0.83,y:0.84,hue:H.clear},
+         {id:"AP",label:"Confusion",   x:0.50,y:0.50,hue:H.confusion,round:true}],
+        [{from:"CH",to:"CX",label:"stabilize first",         bow:-34, labelT:0.30},
+         {from:"CX",to:"CH",label:"deliberate shallow dive", bow: 34, dashed:true, labelT:0.30},
+         {from:"CX",to:"CD",label:"patterns hold, codify",   bow:-26},
+         {from:"CD",to:"CL",label:"habit hardens",           bow:-34, labelT:0.30},
+         {from:"CL",to:"CD",label:"the rule stops working",  bow: 34, labelT:0.30},
+         {from:"CL",to:"CH",label:"complacency: the fall",   bow: 26, dashed:true},
+         {from:"AP",to:"CX",dashed:true},
+         {from:"AP",to:"CD",dashed:true}],
+        740, 470);
+    },
+
+    "orientation": function(){
+      return CX.build.graph(
+        [{id:"Q", label:"How does cause and effect behave?", x:0.13,y:0.50,maxW:130},
+         {id:"CL",label:"Clear",      x:0.86,y:0.08,hue:H.clear},
+         {id:"CD",label:"Complicated",x:0.86,y:0.29,hue:H.complicated},
+         {id:"CX",label:"Complex",    x:0.86,y:0.50,hue:H.complex},
+         {id:"CH",label:"Chaotic",    x:0.86,y:0.71,hue:H.chaotic},
+         {id:"AP",label:"Confusion",  x:0.86,y:0.92,hue:H.confusion,round:true}],
+        [{from:"Q",to:"CL",label:"obvious to everyone"},
+         {from:"Q",to:"CD",label:"an expert can work it out"},
+         {from:"Q",to:"CX",label:"only visible in hindsight"},
+         {from:"Q",to:"CH",label:"no time to even ask"},
+         {from:"Q",to:"AP",label:"I honestly cannot tell"}],
+        780, 400);
+    }
+  };
+
+  function drawDiagrams(){
+    Array.prototype.forEach.call(document.querySelectorAll("#learn .mmd[data-dia]"), function(el){
+      var f = DIAGRAMS[el.getAttribute("data-dia")];
+      if(f) try{ el.innerHTML = f(); }catch(e){ el.textContent = "diagram unavailable"; }
+    });
+  }
+  drawDiagrams();
+
 
   renderQ1();
 })();
