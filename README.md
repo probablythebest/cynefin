@@ -93,9 +93,9 @@ with a brightness filter over it in dark mode, because the library baked light
 colours into its output.
 
 **Text is measured, not estimated.** `CX.textWidth` uses a canvas to measure the
-real string in the real font, so boxes fit their labels and long item text is
-ellipsised at exactly the width available. Every clipping bug in this project's
-history came from a width that was guessed.
+real string in the real font, so boxes fit their labels and item text wraps at
+exactly the width available. Every clipping bug in this project's history came from
+a width that was guessed.
 
 The three builders: `CX.build.chain` for the per-domain decision sequences,
 `CX.build.graph` for hand-positioned node graphs, and `CX.board` for the Cynefin
@@ -123,16 +123,20 @@ line reads as a strikethrough through the text.
 One generic curve cannot serve every pair, so `CX.board` picks a route by where the
 two domains sit, and sizes the board to fit what it picked.
 
-**Same column** runs straight down the row gutter, held to the panel's inner edge so
-the label sits on the column center without covering the arrow. The gutter is sized
-from the number of lanes: it used to be a flat 18px, which was narrower than the
+**Same column** gives each transition its own slot across the column: the arrow on the
+slot's inner edge, its label filling the rest of that slot and sitting 9px from it.
+Stacking both labels on the column center instead left no way to tell which text went
+with which arrow once a column carried two going opposite ways. The gutter is sized
+from the tallest wrapped label: it used to be a flat 18px, which was narrower than the
 padding held off each panel, so the curve collapsed to a 2px stub with the arrowhead
 clipped off and only the label showed.
 
-**Same row** bows across the middle, which has room for one. The bow is measured from
-whichever endpoint sorts first, not from the arrow's own direction: flipping the sign
-per lane in the arrow's frame cancels against the reversal, and a there-and-back pair
-came out as two identical curves with two labels on the same spot.
+**Same row** bows to the outer side of its row, away from Confusion, so its label stays
+clear of the band a diagonal turns in; bowing inward put the two labels on one strip
+where they read as a single line of text. The bow is measured from whichever endpoint
+sorts first, not from the arrow's own direction: flipping the sign per lane in the
+arrow's frame cancels against the reversal, and a there-and-back pair came out as two
+identical curves with two labels on the same spot.
 
 **Diagonal** takes a rounded L out of the left-column panel, up or down the channel
 beside Confusion, then in along the band above or below it. A straight diagonal runs
@@ -140,7 +144,10 @@ under the Confusion panel, and panels are drawn over the lines, so most of the a
 vanished. Confusion is centered on the row gutter and can be taller than the rows
 beside it, so the quadrant panels grow until that band exists.
 
-Repeats between the same pair take separate lanes in all three routes.
+Repeats between the same pair take separate lanes in all three routes. Every label
+ends up nearer its own arrow than any other, which is the property to check when
+changing any of this: on a board carrying all twelve possible transitions, no label
+has a second arrow within three times its own arrow's distance.
 
 ## Diagram density
 
@@ -149,8 +156,10 @@ contents, so items cannot collide: a 33-item board renders with zero overlapping
 chips and zero text outside the canvas, and adding more just makes the board
 taller.
 
-Item labels wider than their column are ellipsised at the measured width, so a
-long label shortens rather than escaping its box.
+Item text wraps rather than being cut off: a chip is as tall as its own words need,
+and the panel around it grows to match. A 4-line cap with an ellipsis on the last
+line guards against one pathological entry stretching the whole board, but nothing
+of a realistic length reaches it. Transition labels wrap the same way.
 
 This replaced a fixed-canvas library whose quadrants overlapped once a domain got
 busy, and which needed hand-fitted width and height formulas to stay legible.
