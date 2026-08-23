@@ -116,21 +116,38 @@
   .empty{ font-size:.85rem; color:var(--muted); font-style:italic; padding:6px 2px; }
 
   /* -- Board ------------------------------------------------- */
-  /* the four domains around a center column, so Confusion sits where it does on
-     the diagram: in the middle, between all four. */
+  /* Three rows, and the middle one is the gutter the transitions run through.
+     Confusion is placed in that gutter and centred on it, overflowing evenly
+     above and below, which is where it sits on a Cynefin board. Spanning both
+     panel rows instead would fill the whole middle column and leave a diagonal
+     nowhere to turn. The gutter is set from JS, wide enough for the arrows the
+     current transitions need. */
   .board{
+    position:relative;
     display:grid;
     grid-template-columns:minmax(0,1fr) minmax(150px,.62fr) minmax(0,1fr);
-    gap:16px;
+    grid-template-rows:auto var(--rgap,16px) auto;
+    column-gap:40px;
+    row-gap:0;
   }
   .zone[data-domain="complex"]    { grid-column:1; grid-row:1; }
   .zone[data-domain="complicated"]{ grid-column:3; grid-row:1; }
-  .zone[data-domain="chaotic"]    { grid-column:1; grid-row:2; }
-  .zone[data-domain="clear"]      { grid-column:3; grid-row:2; }
-  .zone[data-domain="confusion"]  { grid-column:2; grid-row:1 / span 2; }
+  .zone[data-domain="chaotic"]    { grid-column:1; grid-row:3; }
+  .zone[data-domain="clear"]      { grid-column:3; grid-row:3; }
+  .zone[data-domain="confusion"]  { grid-column:2; grid-row:2; align-self:center; }
+  /* the arrows sit over the panels and take no clicks: the panels underneath are
+     drop targets, and every transition is editable in the list below anyway */
+  .board .arrows{
+    position:absolute; inset:0; width:100%; height:100%;
+    pointer-events:none; overflow:visible; z-index:1;
+  }
   @media (max-width:860px){
-    .board{ grid-template-columns:minmax(0,1fr); }
-    .board .zone{ grid-column:1; grid-row:auto; }
+    .board{ grid-template-columns:minmax(0,1fr); grid-template-rows:none;
+            column-gap:16px; row-gap:16px; }
+    .board .zone{ grid-column:1; grid-row:auto; align-self:auto; }
+    /* stacked, there is no channel to route through, so the arrow layer draws
+       nothing; the transitions card below is the full record either way */
+    .board .arrows{ display:none; }
   }
   .zone{
     position:relative; background:var(--sheet); border:1px solid var(--rule);
@@ -204,32 +221,8 @@
   .export{ padding:0 clamp(12px,2.2vw,22px) 18px; }
   .tabrow{ display:flex; flex-wrap:wrap; gap:4px; align-items:center; padding:9px 12px; border-bottom:1px solid var(--rule); }
   .tabrow .spacer{ flex:1; }
-  .tab{
-    font-family:var(--sans); font-size:.67rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600;
-    padding:6px 11px; border-radius:2px; cursor:pointer; background:transparent;
-    border:1px solid transparent; color:var(--muted);
-  }
-  .tab:hover{ color:var(--ink); }
-  .tab[aria-selected="true"]{ color:var(--ink); border-color:var(--rule); background:var(--paper); }
-  .pane[hidden]{ display:none; }
   .chk{ display:flex; align-items:center; gap:6px; font-family:var(--sans); font-size:.67rem; letter-spacing:.12em; text-transform:uppercase; font-weight:600; color:var(--muted); cursor:pointer; }
   .chk input{ accent-color:var(--ink); }
-
-  .inset{
-    background:var(--sunk); border-top:1px solid var(--rule);
-    padding:18px 14px; overflow-x:auto; min-height:180px;
-    display:flex; align-items:center; justify-content:center;
-  }
-  #dia{ width:100%; min-width:0; }
-  /* our SVG sets its own viewBox and scales to the pane; cap the height so a
-     tall board still fits on screen */
-  #dia svg{
-    display:block; margin:0 auto;
-    width:100% !important;
-    max-width:100% !important;
-    height:auto !important;
-    max-height:76vh;
-  }
   .err{
     margin:0; padding:14px 18px; background:var(--sunk); border-top:1px solid var(--rule);
     color:var(--h-chaotic); font-size:.85rem; font-family:var(--sans); letter-spacing:.04em;
@@ -322,6 +315,10 @@
       </header>
       <div class="drop cards" data-domain="confusion"></div>
     </section>
+
+    <!-- the transitions, drawn over the panels they connect. Decoration only:
+         every transition is also listed, and editable, in the card below. -->
+    <svg class="arrows" id="arrows" aria-hidden="true" focusable="false"></svg>
   </div>
 </div>
 
@@ -350,23 +347,20 @@
 <!-- -- Output ------------------------------------------------ -->
 <div class="export">
   <div class="box">
-    <div class="tabrow" role="tablist" aria-label="Output">
-      <button class="tab" type="button" role="tab" id="tab-diagram" aria-selected="true" aria-controls="pane-diagram">Diagram</button>
-      <button class="tab" type="button" role="tab" id="tab-source" aria-selected="false" aria-controls="pane-source">Mermaid source</button>
+    <!-- The board above is the diagram, so there is no preview of it here. What
+         is left is the portable form of the same thing. -->
+    <div class="tabrow">
+      <span class="lbl">Mermaid source</span>
       <span class="spacer"></span>
       <label class="chk"><input type="checkbox" id="showDesc" /> Domain descriptions</label>
       <button class="btn" type="button" id="copyBtn">Copy source</button>
     </div>
 
-    <div class="pane" id="pane-diagram" role="tabpanel" aria-labelledby="tab-diagram">
-      <div class="inset"><div id="dia"></div></div>
-      <p class="err" id="err" hidden></p>
-    </div>
-
-    <div class="pane" id="pane-source" role="tabpanel" aria-labelledby="tab-source" hidden>
+    <div class="pane">
       <pre class="src" id="src" tabindex="0"></pre>
     </div>
 
+    <p class="err" id="err" hidden></p>
     <div class="foot" id="foot"></div>
   </div>
 </div>
@@ -454,8 +448,13 @@
   /* -- refs ------------------------------------------------ */
   var tray      = document.getElementById("tray");
   var srcEl     = document.getElementById("src");
-  var diaEl     = document.getElementById("dia");
+  var boardEl   = document.getElementById("board");
+  var arrowEl   = document.getElementById("arrows");
   var errEl     = document.getElementById("err");
+  var zoneCache = {};
+  function zoneEl(k){
+    return zoneCache[k] || (zoneCache[k] = boardEl.querySelector('.zone[data-domain="' + k + '"]'));
+  }
   var footEl    = document.getElementById("foot");
   var readList  = document.getElementById("readList");
   var tallyEl   = document.getElementById("tally");
@@ -742,30 +741,59 @@
      spilling past the viewBox origin where it is silently clipped. Refit the
      viewBox to the real content box so nothing is lost. */
 
-  /* Rendered by our own SVG builder (CX.board), not a diagram library. It is
-     synchronous, so there is no render race and no token guard needed, and it
-     draws straight from the board data rather than from generated source. */
+  /* The board you edit is the diagram, so transitions are drawn over the live
+     panels rather than over a second picture of them. Everything comes from
+     measured rectangles: the plan says how much room the routes need, the
+     layout is sized to give it, then the panels are measured again and the
+     arrows drawn into an overlay on top.
+
+     Two passes, and one would not do. How wide the gutter has to be and how
+     tall the panels have to be depend on the transitions; where the arrows go
+     depends on where the browser then put the panels. */
   function draw(){
     try{
-      diaEl.innerHTML = CX.board({
-        order: ORDER,
-        names: { clear:"Clear", complicated:"Complicated", complex:"Complex",
-                 chaotic:"Chaotic", confusion:"Confusion" },
-        hues:  { clear:"var(--h-clear)", complicated:"var(--h-complicated)",
-                 complex:"var(--h-complex)", chaotic:"var(--h-chaotic)",
-                 confusion:"var(--h-confusion)" },
-        items: ORDER.reduce(function(acc,k){
-                 acc[k] = byDomain(k).map(function(i){ return i.t; }); return acc; }, {}),
-        transitions: trans.filter(function(t){ return t.f !== t.to; }),
-        title: title.trim()
+      var live = trans.filter(function(t){ return t.f !== t.to; });
+      var colW = zoneEl("complex").getBoundingClientRect().width || 300;
+      var plan = CX.arrows.plan(live, colW);
+
+      boardEl.style.setProperty("--rgap", plan.rowGap + "px");
+      ORDER.forEach(function(k){ zoneEl(k).style.minHeight = ""; });
+      var min = plan.rowMin(zoneEl("confusion").getBoundingClientRect().height);
+      ["complex","complicated"].forEach(function(k){
+        if(min.top > 0) zoneEl(k).style.minHeight = Math.ceil(min.top) + "px"; });
+      ["chaotic","clear"].forEach(function(k){
+        if(min.bottom > 0) zoneEl(k).style.minHeight = Math.ceil(min.bottom) + "px"; });
+
+      var box = boardEl.getBoundingClientRect(), rects = {};
+      ORDER.forEach(function(k){
+        var r = zoneEl(k).getBoundingClientRect();
+        rects[k] = { x:r.left-box.left, y:r.top-box.top, w:r.width, h:r.height };
       });
+      arrowEl.setAttribute("viewBox", "0 0 " + Math.round(box.width) + " " + Math.round(box.height));
+      arrowEl.innerHTML = CX.arrows.draw(plan, rects, "var(--sheet)");
       errEl.hidden = true;
     }catch(e){ showErr(e); }
   }
 
   function showErr(e){
     errEl.hidden = false;
-    errEl.textContent = "The diagram could not be drawn: " + (e && e.message ? e.message : String(e));
+    errEl.textContent = "The transitions could not be drawn: " + (e && e.message ? e.message : String(e));
+  }
+
+  /* The arrows are positioned from where the browser put the panels, so they
+     have to be redrawn whenever that changes: a window resize, a card added to
+     a column, or the Build pane being shown again after Learn, which is the one
+     that would otherwise leave the layer drawn against a zero-sized board.
+     draw() resizes the board it is observing, by setting the gutter and the
+     panel minimums, so this would loop if it were not idempotent: the second
+     pass writes the same values, the size stops changing, and it settles. */
+  if(window.ResizeObserver){
+    var redrawQueued = false;
+    new ResizeObserver(function(){
+      if(redrawQueued) return;
+      redrawQueued = true;
+      requestAnimationFrame(function(){ redrawQueued = false; draw(); });
+    }).observe(boardEl);
   }
 
   /* -- commit ---------------------------------------------- */
@@ -1006,20 +1034,6 @@
     commit();
   });
 
-  /* tabs */
-  var tabD = document.getElementById("tab-diagram");
-  var tabS = document.getElementById("tab-source");
-  var paneD = document.getElementById("pane-diagram");
-  var paneS = document.getElementById("pane-source");
-  function pick(which){
-    var d = which === "diagram";
-    tabD.setAttribute("aria-selected", d ? "true" : "false");
-    tabS.setAttribute("aria-selected", d ? "false" : "true");
-    paneD.hidden = !d;
-    paneS.hidden = d;
-  }
-  tabD.addEventListener("click", function(){ pick("diagram"); });
-  tabS.addEventListener("click", function(){ pick("source"); });
 
   /* copy */
   var copyBtn = document.getElementById("copyBtn");
@@ -1031,7 +1045,6 @@
       setTimeout(function(){ copyBtn.textContent = was; }, 1600);
     }
     function fallback(){
-      pick("source");
       var r = document.createRange();
       r.selectNodeContents(srcEl);
       var sel = window.getSelection();

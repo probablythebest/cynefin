@@ -2,9 +2,10 @@
 
 A single page with two tabs, for sorting real work with the Cynefin framework.
 
-- **Build** is a sorting board. Add the decisions in front of you, drag them onto a
-  domain, add transitions between domains, and get a live Mermaid `cynefin-beta`
-  diagram plus a read of the board. Work persists in `localStorage`, and can be
+- **Build** is a sorting board that is itself the Cynefin diagram: add the decisions
+  in front of you, drag them onto a domain, and add transitions, which are drawn as
+  arrows over the panels they connect. Underneath it, a read of the board and the
+  portable `cynefin-beta` source. Work persists in `localStorage`, and can be
   exported to and imported from JSON.
 - **Learn** is an interactive field sheet: a clickable terrain map, per-domain
   decision sequences, the movement between domains, a two-question orientation
@@ -24,7 +25,8 @@ without a `<base>` tag. `.nojekyll` keeps Jekyll out of the way.
 ```
 index.html              the built page, committed so a clone opens with no toolchain
 src/
-  render.js             original SVG diagram renderer, no dependencies
+  render.js             original SVG renderer: the Learn diagrams, and the
+                        transition arrows drawn over the Build board
   explainer.html        source for the Learn tab
   builder-template.html source for the Build tab
   merge.js              reconciles the two into one document
@@ -78,6 +80,38 @@ overflowed unnoticed. If you re-fit anything anchored to a label, check the labe
 `merge.js` emits, not the one in the source file. The Learn terrain map is the only
 place with hand-placed SVG text.
 
+## The board you edit is the diagram
+
+There is one board, not a board and a picture of one. The five domain panels are
+the live HTML you drag cards into, laid out as a Cynefin board, and the transitions
+are drawn as an SVG layer over them. Until 2026-08-23 the Build tab carried both:
+editable zones on top and a redrawn SVG copy underneath, showing the same items
+twice and going out of step whenever one changed.
+
+Keeping the editing in HTML is what makes this cheap. Drag and drop, inline text
+editing, the `1`-`5` shortcuts, focus rings and screen-reader labels all keep
+working because none of them moved. Only the arrows are drawn.
+
+**The arrow layer takes no clicks.** `pointer-events: none` on the `.arrows` SVG,
+because the panels underneath it are drop targets. Transitions are added and removed
+in the card below the board, which is also the whole record of them when the layout
+is too narrow to draw arrows at all.
+
+**Two passes, and one would not do.** How wide the row gutter has to be and how tall
+the panels have to be depend on the transitions; where the arrows go depends on where
+the browser then put the panels. So `draw()` plans, writes `--rgap` and the panel
+minimums, measures what it got, and draws into the overlay. It is idempotent, which
+is what stops the `ResizeObserver` watching the board it resizes from looping.
+
+**Confusion sits in the gutter, not across it.** The board is three grid rows: panels,
+gutter, panels. Confusion is placed in the middle row and centered on it, overflowing
+evenly above and below, which is where it belongs on a Cynefin board. Spanning both
+panel rows instead filled the whole middle column and left a diagonal nowhere to turn.
+
+**Below 860px the board stacks and the arrows are not drawn.** `CX.arrows.draw`
+returns nothing unless it measures the real two-by-two, because stacked there is no
+channel to route through and a wrong arrow is worse than no arrow.
+
 ## Diagrams are drawn by our own renderer
 
 `src/render.js` builds every diagram as SVG. It is original work with no
@@ -87,32 +121,26 @@ the payload from about 985 KB gzipped to about 32 KB.
 
 Two things this buys beyond size.
 
-**The diagrams theme themselves.** Colours are `var(--h-clear)`, `var(--ink)` and
+**The diagrams theme themselves.** Colors are `var(--h-clear)`, `var(--ink)` and
 so on, read straight from the page. The old approach needed a light "paper" inset
 with a brightness filter over it in dark mode, because the library baked light
-colours into its output.
+colors into its output.
 
 **Text is measured, not estimated.** `CX.textWidth` uses a canvas to measure the
-real string in the real font, so boxes fit their labels and item text wraps at
-exactly the width available. Every clipping bug in this project's history came from
-a width that was guessed.
+real string in the real font, so boxes fit their labels and text wraps at exactly
+the width available. Every clipping bug in this project's history came from a width
+that was guessed.
 
 The three builders: `CX.build.chain` for the per-domain decision sequences,
-`CX.build.graph` for hand-positioned node graphs, and `CX.board` for the Cynefin
-board itself. Node positions in `graph` are given as fractions of the canvas, so
-the movement diagram places the domains in the real Cynefin geometry rather than
-accepting whatever a generic top-down layout produces.
+`CX.build.graph` for hand-positioned node graphs, and `CX.arrows` for the transitions
+over the Build board. Node positions in `graph` are given as fractions of the canvas,
+so the movement diagram places the domains in the real Cynefin geometry rather than
+accepting whatever a generic top-down layout produces. `CX.arrows` works entirely
+from measured rectangles, which is what lets it serve whatever panel sizes the
+browser hands back.
 
 Mermaid's `cynefin-beta` syntax is still emitted as an export format. Generating
 that text costs nothing and keeps boards portable.
-
-Two rendering rules that are easy to break by accident:
-
-**The diagram plate is `--sunk`, in both panes.** It used to be a fixed light
-`#EFEDE3` with `filter: brightness(.82)` dropped over it in dark mode, which was
-scaffolding for a renderer that baked light colors into its SVG. Ours does not, so
-the plate is a normal themed surface. Edge labels paint an opaque `--sunk` plate to
-erase the line behind them, which only works while the two agree.
 
 **Edge labels are collected and appended after every edge is drawn.** Drawn inline,
 an edge later in the list paints over the plate of a label already placed, and the
@@ -120,8 +148,8 @@ line reads as a strikethrough through the text.
 
 ### Transition routing on the board
 
-One generic curve cannot serve every pair, so `CX.board` picks a route by where the
-two domains sit, and sizes the board to fit what it picked.
+One generic curve cannot serve every pair, so `CX.arrows` picks a route by where the
+two domains sit, and the caller sizes the board to fit what it picked.
 
 **Same column** gives each transition its own slot across the column: the arrow on the
 slot's inner edge, its label filling the rest of that slot and sitting 9px from it.
@@ -139,27 +167,33 @@ arrow's frame cancels against the reversal, and a there-and-back pair came out a
 identical curves with two labels on the same spot.
 
 **Diagonal** takes a rounded L out of the left-column panel, up or down the channel
-beside Confusion, then in along the band above or below it. A straight diagonal runs
-under the Confusion panel, and panels are drawn over the lines, so most of the arrow
-vanished. Confusion is centered on the row gutter and can be taller than the rows
-beside it, so the quadrant panels grow until that band exists.
+beside Confusion, then in along the band above or below it. A straight diagonal passes
+behind the Confusion panel. Confusion is centered on the row gutter and can be taller
+than the rows beside it, so the quadrant panels grow until that band exists.
+
+**Every label has to land in open board**, because the arrows are drawn over the live
+panels and a label plate that lands on one hides the items underneath. A label that
+does not clear slides along its own route first, which keeps it on its arrow, and only
+then steps off it in widening rings. A bow between two panels that nearly touch has no
+point on itself in open board at all: the channel between them is narrower than the
+words, so it ends up in the gutter beside them.
 
 Repeats between the same pair take separate lanes in all three routes. Every label
 ends up nearer its own arrow than any other, which is the property to check when
 changing any of this: on a board carrying all twelve possible transitions, no label
-has a second arrow within three times its own arrow's distance.
+has a second arrow within three times its own arrow's distance, and no arrow or label
+overlaps a panel.
 
-## Diagram density
+## Board density
 
-There is no density limit and nothing is capped. Panels grow to fit their
-contents, so items cannot collide: a 33-item board renders with zero overlapping
-chips and zero text outside the canvas, and adding more just makes the board
-taller.
+There is no density limit and nothing is capped. The panels are ordinary HTML that
+grows to fit its contents, so items cannot collide: a 33-item board is just a taller
+board. Item text wraps natively, with `overflow-wrap: anywhere` so a single long
+unbroken word cannot force a panel wider than its column.
 
-Item text wraps rather than being cut off: a chip is as tall as its own words need,
-and the panel around it grows to match. A 4-line cap with an ellipsis on the last
-line guards against one pathological entry stretching the whole board, but nothing
-of a realistic length reaches it. Transition labels wrap the same way.
+Transition labels are drawn text rather than HTML, so they wrap against a measured
+width, with a 3-line cap and an ellipsis past it. That cap is a guard against one
+pathological label, not the normal path.
 
 This replaced a fixed-canvas library whose quadrants overlapped once a domain got
 busy, and which needed hand-fitted width and height formulas to stay legible.

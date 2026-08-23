@@ -200,37 +200,32 @@ CX.build = (function(){
    Confusion at the centre, matching the geometry the Learn map already uses,
    so the two tabs agree. Every item is drawn: the panel grows to fit rather
    than the canvas being fixed and the contents colliding. */
-CX.board = function(opts){
+
+/* ---- transition arrows over a Cynefin board -----------------------------
+   The board the user edits IS the diagram, so these arrows are drawn over the
+   live HTML panels rather than over a picture of them. Everything here works
+   from measured rectangles, which is what lets the same routing serve whatever
+   panel sizes the browser hands back.
+
+   One generic curve cannot serve every pair, so each transition takes one of
+   three routes:
+     same column  a straight run down the row gutter, each transition in its
+                  own slot across the column with its label beside its arrow
+     same row     a shallow bow to the outer side of the row, clear of the band
+                  a diagonal turns in
+     diagonal     a rounded L up the channel beside Confusion, then in along the
+                  band above or below it, because a straight diagonal would pass
+                  behind the Confusion panel
+   Lane indices keep repeats between the same pair off each other.           */
+CX.arrows = (function(){
   "use strict";
-  var order  = opts.order;            // ["clear","complicated","complex","chaotic","confusion"]
-  var names  = opts.names;            // { clear:"Clear", ... }
-  var hues   = opts.hues;             // { clear:"var(--h-clear)", ... }
-  var items  = opts.items;            // { clear:[str,...], ... }
-  var trans  = opts.transitions||[];  // [{f,to,l}]
-  var title  = opts.title||"";
-
   var SERIF = 'Georgia, "Iowan Old Style", Palatino, serif';
-  var SANS  = '"Avenir Next Condensed","Roboto Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif';
-  var ITEMF = '12.5px ' + SERIF, HEADF = '600 11px ' + SANS, TITF = '15px ' + SERIF;
-  var LABF  = '11px ' + SERIF, LABLH = 15;   // transition labels
-  var IT = {family:SERIF,size:"12.5px"}, HD = {family:SANS,size:"11px"}, TT = {family:SERIF,size:"15px"};
+  var LABF = '11px ' + SERIF, LAB = {family:SERIF, size:"11px"}, LABLH = 15;
 
-  var COLW = 300, MIDW = 210, GAP = 40, PAD = 16;
-  var ITEMH = 24, ITEMGAP = 6, HEADH = 30, ROWPAD = 14;
-
-  /* ---- routing plan, before geometry, because it sizes the board ------------
-     One generic curve cannot serve every pair, so each transition takes one of
-     three routes:
-       same column  a straight run down the row gutter. A curve there collapsed
-                    into a 2px stub with the arrowhead clipped off, because the
-                    gutter was narrower than the padding held off each panel.
-       same row     a shallow bow across the middle, which has room for one.
-       diagonal     a rounded L up the channel beside Confusion, then in along
-                    the band above or below it. A straight diagonal runs under
-                    the Confusion panel, and panels are drawn over the lines.
-     Lane indices keep repeats from stacking on top of each other.              */
   var LCOL = {complex:1, chaotic:1}, RCOL = {complicated:1, clear:1};
   var TROW = {complex:1, complicated:1}, BROW = {chaotic:1, clear:1};
+  var DOMAINS = {clear:1, complicated:1, complex:1, chaotic:1, confusion:1};
+
   function isQuad(k){ return !!(TROW[k] || BROW[k]); }
   function sameCol(a,b){ return !!((LCOL[a]&&LCOL[b]) || (RCOL[a]&&RCOL[b])); }
   function sameRow(a,b){ return !!((TROW[a]&&TROW[b]) || (BROW[a]&&BROW[b])); }
@@ -238,121 +233,48 @@ CX.board = function(opts){
   /* a diagonal always joins one left-column panel to one right-column panel */
   function ends(t){ var R = RCOL[t.f] ? t.f : t.to; return { R:R, L:(R === t.f ? t.to : t.f) }; }
 
-  var tl   = trans.filter(function(t){ return t.f !== t.to && names[t.f] && names[t.to]; });
-  var vert = tl.filter(function(t){ return sameCol(t.f, t.to); });
-  var diag = tl.filter(function(t){ return isDiag(t.f, t.to); });
-  var bows = tl.filter(function(t){ return !sameCol(t.f, t.to) && !isDiag(t.f, t.to); });
+  function labSlot(colW, n){ return colW / Math.max(1, n); }
+  function labMaxW(colW, n){ return labSlot(colW, n) - (n > 1 ? 60 : 34); }
 
-  var vLeft  = vert.filter(function(t){ return LCOL[t.f]; }).length;
-  var vLanes = Math.max(vLeft, vert.length - vLeft);
-  var dTop   = diag.filter(function(t){ return TROW[ends(t).R]; }).length;
-  var dBot   = diag.length - dTop;
+  /* What the transitions need from the layout, worked out before the browser
+     lays it out: the caller sizes the row gutter and the panels from this, then
+     hands back the rectangles it ended up with. */
+  function plan(transitions, colW){
+    var tl   = (transitions||[]).filter(function(t){ return t.f !== t.to && DOMAINS[t.f] && DOMAINS[t.to]; });
+    var vert = tl.filter(function(t){ return sameCol(t.f, t.to); });
+    var diag = tl.filter(function(t){ return isDiag(t.f, t.to); });
+    var bows = tl.filter(function(t){ return !sameCol(t.f, t.to) && !isDiag(t.f, t.to); });
 
-  /* Item text wraps rather than being cut off, so a chip is as tall as its own
-     words need. Panels are sized from the wrapped heights, which is what keeps
-     growth from turning into overlap. The 4-line cap is a guard against one
-     pathological entry stretching the whole board, not the normal path. */
-  var ITEMLH = 17, ITEMMAX = 4;
-  function itemPad(w){ return w - 28 - 20; }          // chip inset, then text inset
-  function itemLines(txt, w){
-    var ls = CX.wrap(txt, ITEMF, itemPad(w));
-    if(ls.length > ITEMMAX){
-      ls = ls.slice(0, ITEMMAX);
-      var last = ls[ITEMMAX-1];
-      while(last.length > 1 && CX.textWidth(last + "…", ITEMF) > itemPad(w)) last = last.slice(0,-1);
-      ls[ITEMMAX-1] = last.replace(/\s+$/,"") + "…";
-    }
-    return ls;
-  }
-  function itemH(n){ return Math.max(ITEMH, n*ITEMLH + 10); }
+    var vLeft  = vert.filter(function(t){ return LCOL[t.f]; }).length;
+    var p = {
+      vert:vert, diag:diag, bows:bows, vLeft:vLeft,
+      vLanes: Math.max(vLeft, vert.length - vLeft),
+      dTop: diag.filter(function(t){ return TROW[ends(t).R]; }).length,
+      bowTop: bows.some(function(t){ return TROW[t.f] && TROW[t.to]; }),
+      bowBot: bows.some(function(t){ return BROW[t.f] && BROW[t.to]; })
+    };
+    p.dBot = diag.length - p.dTop;
 
-  /* quadrant column heights are driven by their own contents */
-  function stackH(list, w){
-    if(!list.length) return 18;
-    return list.reduce(function(h, txt, i){
-      return h + itemH(itemLines(txt, w).length) + (i ? ITEMGAP : 0);
-    }, 0);
-  }
-  var topH = Math.max(stackH(items.complex||[], COLW), stackH(items.complicated||[], COLW));
-  var botH = Math.max(stackH(items.chaotic||[], COLW), stackH(items.clear||[], COLW));
-  var panelTop = HEADH + ROWPAD + topH + ROWPAD;
-  var panelBot = HEADH + ROWPAD + botH + ROWPAD;
-  var confH    = HEADH + ROWPAD + stackH(items.confusion||[], MIDW) + ROWPAD;
+    /* the gutter holds a real arrow, not a stub, and the tallest wrapped label */
+    var lines = 1;
+    vert.forEach(function(t){
+      var n = LCOL[t.f] ? vLeft : vert.length - vLeft;
+      lines = Math.max(lines, CX.wrap(t.l || "", LABF, labMaxW(colW, n)).length);
+    });
+    p.rowGap = p.vLanes ? Math.max(46, lines*LABLH + 34) : 16;
 
-  /* Each same-column transition gets its own slot across the column: the arrow on
-     the slot's inner edge, its label filling the rest of that slot. Stacking the
-     labels on the column centre instead left no way to tell which text belonged
-     to which arrow once a column carried two going opposite ways. */
-  function labSlot(n){ return COLW / Math.max(1, n); }
-  function labMaxW(n){ return labSlot(n) - (n > 1 ? 60 : 34); }
-  var vLines = 1;
-  vert.forEach(function(t){
-    var n = LCOL[t.f] ? vLeft : vert.length - vLeft;
-    vLines = Math.max(vLines, CX.wrap(t.l || "", LABF, labMaxW(n)).length);
-  });
-  /* the row gutter holds a real arrow, not a stub, and the tallest wrapped label */
-  var RGAP = vLanes ? Math.max(46, vLines*LABLH + 34) : 18;
-  /* A diagonal turns in the band between Confusion and the row it lands in, so
-     that band has to exist. Confusion is centred on the gutter and can be taller
-     than the rows beside it, so grow those rows until the band opens up. A
-     same-row transition in that row needs its own strip further out, or its
-     label lands on the band and the two read as one. */
-  var bowTop = bows.some(function(t){ return TROW[t.f] && TROW[t.to]; });
-  var bowBot = bows.some(function(t){ return BROW[t.f] && BROW[t.to]; });
-  function band(n, bow){ return n ? confH/2 - RGAP/2 + 28 + n*24 + (bow ? 44 : 0) : 0; }
-  panelTop = Math.max(panelTop, band(dTop, bowTop));
-  panelBot = Math.max(panelBot, band(dBot, bowBot));
-
-  var titleH = title ? 30 : 0;
-  var W = PAD*2 + COLW*2 + MIDW + GAP*2;
-  var H = PAD*2 + titleH + panelTop + RGAP + panelBot;
-  var midY = PAD + titleH + panelTop + RGAP/2;
-
-  var out = [CX.svgOpen(W,H), CX.defs()];
-  if(title){
-    out.push(CX.textBlock([title], W/2, PAD+15, TT, "var(--ink)", 18));
+    /* A diagonal turns in the band between Confusion and the row it lands in, so
+       that band has to exist. Confusion is centred on the gutter and can be
+       taller than the rows beside it, so the caller grows those rows until it
+       does. A same-row transition needs its own strip further out, or its label
+       lands on the band and the two read as one. */
+    p.rowMin = function(confH){
+      function need(n, bow){ return n ? confH/2 - p.rowGap/2 + 28 + n*24 + (bow ? 44 : 0) : 0; }
+      return { top: need(p.dTop, p.bowTop), bottom: need(p.dBot, p.bowBot) };
+    };
+    return p;
   }
 
-  var col = { left: PAD, mid: PAD+COLW+GAP, right: PAD+COLW+GAP+MIDW+GAP };
-  var rowY = { top: PAD+titleH, bottom: PAD+titleH+panelTop+RGAP };
-
-  var place = {
-    complex:     {x:col.left,  y:rowY.top,    w:COLW, h:panelTop},
-    complicated: {x:col.right, y:rowY.top,    w:COLW, h:panelTop},
-    chaotic:     {x:col.left,  y:rowY.bottom, w:COLW, h:panelBot},
-    clear:       {x:col.right, y:rowY.bottom, w:COLW, h:panelBot},
-    confusion:   {x:col.mid,   y:midY-confH/2, w:MIDW, h:confH}
-  };
-
-  /* Transitions are drawn before the panels, so the panels sit on top of the
-     lines. Labels are held back to a second bucket and appended after every
-     line, so no later route paints over a label already placed. */
-  var lines = [], marks = [];
-
-  function stroke(d){
-    lines.push('<path d="'+d+'" fill="none" stroke="var(--ink-2)" stroke-width="1.3" '+
-               'opacity="0.75" marker-end="url(#cx-ah)"/>');
-  }
-  /* Labels wrap rather than being cut off, same as the item chips. The plate is
-     opaque --sunk, the colour the board sits on, so it erases the line under the
-     words instead of letting it read as a strikethrough. align "end" puts x at
-     the plate's right edge and "start" at its left, which is how a label is made
-     to sit against its own arrow rather than floating between two of them. */
-  function label(text, x, y, maxW, align){
-    if(!text) return;
-    var ls = CX.wrap(text, LABF, maxW);
-    if(ls.length > 3){
-      ls = ls.slice(0,3);
-      while(ls[2].length > 1 && CX.textWidth(ls[2] + "…", LABF) > maxW) ls[2] = ls[2].slice(0,-1);
-      ls[2] = ls[2].replace(/\s+$/,"") + "…";
-    }
-    var lw = ls.reduce(function(m,l){ return Math.max(m, CX.textWidth(l, LABF)); }, 0);
-    var h  = ls.length*LABLH + 6;
-    var cx = align === "end" ? x - lw/2 - 5 : align === "start" ? x + lw/2 + 5 : x;
-    marks.push('<rect x="'+CX.r2(cx-lw/2-5)+'" y="'+CX.r2(y-h/2)+'" width="'+CX.r2(lw+10)+'" '+
-               'height="'+CX.r2(h)+'" rx="3" fill="var(--sunk)"/>');
-    marks.push(CX.textBlock(ls, cx, y, {family:SERIF,size:"11px"}, "var(--ink-2)", LABLH));
-  }
   /* polyline with the corners rounded off, never past the midpoint of a leg */
   function rounded(pts, r){
     var d = 'M'+CX.r2(pts[0][0])+' '+CX.r2(pts[0][1]);
@@ -368,107 +290,175 @@ CX.board = function(opts){
     return d + 'L'+CX.r2(e[0])+' '+CX.r2(e[1]);
   }
 
-  /* same column: straight down the gutter, held to the inner edge so the label
-     can sit on the column centre without covering the arrow */
-  var vLane = { l:0, r:0 };
-  vert.forEach(function(t){
-    var left = !!LCOL[t.f], side = left ? "l" : "r";
-    var i = vLane[side]++, n = left ? vLeft : vert.length - vLeft;
-    var p = place[t.f], down = place[t.to].y > p.y, slot = labSlot(n);
-    /* the arrow sits on the inner edge of its own slot, the label right beside it */
-    var x = left ? p.x + (i+1)*slot - 14 : p.x + p.w - (i+1)*slot + 14;
-    var yTop = rowY.top + panelTop + 5, yBot = rowY.bottom - 5;
-    stroke('M'+CX.r2(x)+' '+CX.r2(down ? yTop : yBot)+'L'+CX.r2(x)+' '+CX.r2(down ? yBot : yTop));
-    label(t.l, left ? x - 9 : x + 9, midY, labMaxW(n), left ? "end" : "start");
-  });
+  /* draw(plan, rects, plate) -> markup for the arrow layer. rects are {x,y,w,h}
+     per domain in the layer's own coordinates, plate is the colour a label uses
+     to erase the line behind its words. Returns "" when the board is not in its
+     two-by-two form, which is what a narrow screen gives: there is no channel to
+     route through, and a wrong arrow is worse than no arrow. */
+  function draw(p, rects, plate){
+    var need = ["complex","complicated","chaotic","clear","confusion"], i;
+    for(i=0;i<need.length;i++){ if(!rects[need[i]]) return ""; }
+    var conf = rects.confusion;
+    var twoByTwo = rects.complex.x < rects.complicated.x &&
+                   rects.chaotic.x < rects.clear.x &&
+                   rects.complex.y + rects.complex.h <= rects.chaotic.y + 1 &&
+                   conf.x >= rects.complex.x + rects.complex.w &&
+                   conf.x + conf.w <= rects.complicated.x;
+    if(!twoByTwo) return "";
 
-  /* diagonal: out of the left panel, up or down the channel beside Confusion,
-     then in along the band above or below it */
-  var sliver = col.mid - GAP/2, dLane = { top:0, bot:0 };
-  diag.forEach(function(t, di){
-    var e = ends(t), L = place[e.L], R = place[e.R], up = !!TROW[e.R];
-    var i = up ? dLane.top++ : dLane.bot++;
-    /* lanes share the channel beside Confusion, so the spread has to fit in it */
-    var step = Math.min(12, (GAP - 14) / Math.max(1, diag.length - 1));
-    var sx = sliver + (di - (diag.length-1)/2) * step;
-    var yH = up ? place.confusion.y - 16 - i*22
-                : place.confusion.y + confH + 16 + i*22;
-    var yL = up ? L.y + 26 + i*22 : L.y + L.h - 26 - i*22;
-    var pts = [[L.x + L.w, yL], [sx, yL], [sx, yH], [R.x, yH]];
-    if(t.f === e.R) pts.reverse();
-    stroke(rounded(pts, 10));
-    label(t.l, (sx + R.x)/2, yH, R.x - sx - 30);
-  });
+    var colW = rects.complex.w;
+    var rowTopBottom = rects.complex.y + rects.complex.h;
+    var rowBotTop    = rects.chaotic.y;
+    var midY   = (rowTopBottom + rowBotTop) / 2;
+    var sliver = (rects.complex.x + colW + conf.x) / 2;   // the channel left of Confusion
+    var gapW   = conf.x - (rects.complex.x + colW);
 
-  /* everything else (same row, and anything joining Confusion) bows across */
-  function unit(a, b){
-    var dx = (b.x+b.w/2)-(a.x+a.w/2), dy = (b.y+b.h/2)-(a.y+a.h/2);
-    var len = Math.hypot(dx,dy) || 1;
-    return [dx/len, dy/len];
-  }
-  function edge(p, sx, sy){
-    var hw=p.w/2+8, hh=p.h/2+8;
-    var t1 = sx ? hw/Math.abs(sx) : Infinity, t2 = sy ? hh/Math.abs(sy) : Infinity;
-    var k = Math.min(t1,t2);
-    return [p.x+p.w/2 + sx*k, p.y+p.h/2 + sy*k];
-  }
-  var bowLane = {};
-  bows.forEach(function(t){
-    var a = place[t.f], b = place[t.to];
-    var u = unit(a, b);
-    var p0 = edge(a, u[0], u[1]), p1 = edge(b, -u[0], -u[1]);
-    /* The bow is measured in a canonical frame, from whichever endpoint sorts
-       first, not from the arrow's own direction. Flipping the sign per lane in
-       the arrow's frame cancels against the reversal, so a there-and-back pair
-       came out as two identical curves with two labels on the same spot. */
-    var key = [t.f, t.to].sort(), lane = (bowLane[key.join(">")] || 0);
-    bowLane[key.join(">")] = lane + 1;
-    var c = unit(place[key[0]], place[key[1]]);
-    /* A same-row bow is held to the outer side of its row, away from Confusion
-       and clear of the band a diagonal turns in. Bowing inward put its label on
-       the same strip as the diagonal's, where the two read as one label. */
-    var away = (TROW[t.f] && TROW[t.to]) ? -1 : (BROW[t.f] && BROW[t.to]) ? 1 : 0;
-    var bow;
-    if(away){
-      var half = (away < 0 ? panelTop : panelBot) / 2;
-      var off  = Math.min(Math.max(half - 30, 14), 46) * (1 + lane*0.55);
-      bow = 2 * off * away * Math.sign(c[0] || 1);
-    } else {
-      bow = 26 * (1 + Math.floor(lane/2) * 0.9) * (lane % 2 ? -1 : 1);
+    var lines = [], marks = [];
+    function stroke(d){
+      lines.push('<path d="'+d+'" fill="none" stroke="var(--ink-2)" stroke-width="1.3" '+
+                 'opacity="0.75" marker-end="url(#cx-ah)"/>');
     }
-    var mx = (p0[0]+p1[0])/2, my = (p0[1]+p1[1])/2;
-    var qx = mx - c[1]*bow, qy = my + c[0]*bow;
-    stroke('M'+CX.r2(p0[0])+' '+CX.r2(p0[1])+'Q'+CX.r2(qx)+' '+CX.r2(qy)+' '+
-           CX.r2(p1[0])+' '+CX.r2(p1[1]));
-    label(t.l, (p0[0]+2*qx+p1[0])/4, (p0[1]+2*qy+p1[1])/4, COLW - 40);
-  });
+    /* The arrows are drawn over the live panels, so a label plate that lands on
+       one covers the items underneath. Every label has to sit in open board. */
+    var panels = need.map(function(k){ return rects[k]; });
+    function clears(x, y, w, h){
+      return !panels.some(function(q){
+        return x < q.x+q.w-2 && x+w > q.x+2 && y < q.y+q.h-2 && y+h > q.y+2;
+      });
+    }
 
-  out.push.apply(out, lines);
-  out.push.apply(out, marks);
+    /* Labels wrap rather than being cut off. The plate is opaque and the colour
+       the board sits on, so it erases the line under the words instead of
+       letting it read as a strikethrough. align "end" puts x at the plate's
+       right edge and "start" at its left, which is how a label is made to sit
+       against its own arrow rather than floating between two of them. Pass
+       `along` for a route that can slide its label: it is called with a
+       position from 0 to 1 and returns a point, and the first point whose plate
+       sits in open board wins. */
+    function label(text, x, y, maxW, align, along){
+      if(!text) return;
+      var ls = CX.wrap(text, LABF, maxW);
+      if(ls.length > 3){
+        ls = ls.slice(0,3);
+        while(ls[2].length > 1 && CX.textWidth(ls[2] + "…", LABF) > maxW) ls[2] = ls[2].slice(0,-1);
+        ls[2] = ls[2].replace(/\s+$/,"") + "…";
+      }
+      var lw = ls.reduce(function(m,l){ return Math.max(m, CX.textWidth(l, LABF)); }, 0);
+      var h  = ls.length*LABLH + 6, w = lw + 10;
+      function at(px, py){
+        var cx = align === "end" ? px - lw/2 - 5 : align === "start" ? px + lw/2 + 5 : px;
+        return { cx:cx, x:cx - lw/2 - 5, y:py - h/2 };
+      }
+      var spot = at(x, y), i, cand, pt;
+      if(!clears(spot.x, spot.y, w, h)){
+        var tries = [];
+        /* first slide along the route, which keeps the label on its own arrow */
+        if(along){
+          [.5,.44,.56,.38,.62,.32,.68,.26,.74,.2,.8].forEach(function(s){ tries.push(along(s)); });
+        }
+        /* then step off it. A bow between two panels that nearly touch has no
+           point on itself in open board: the channel between them is narrower
+           than the words. The nearest open strip is the gutter or the channel
+           beside Confusion, and this finds whichever is closer. */
+        [24,40,60,80,110].forEach(function(rad){
+          [[0,-1],[0,1],[-1,0],[1,0],[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(d){
+            tries.push([x + d[0]*rad, y + d[1]*rad]);
+          });
+        });
+        for(i=0;i<tries.length;i++){
+          pt = tries[i]; cand = at(pt[0], pt[1]);
+          if(clears(cand.x, cand.y, w, h)){ spot = cand; break; }
+        }
+      }
+      marks.push('<rect x="'+CX.r2(spot.x)+'" y="'+CX.r2(spot.y)+'" width="'+CX.r2(w)+'" '+
+                 'height="'+CX.r2(h)+'" rx="3" fill="'+(plate || "var(--paper)")+'"/>');
+      marks.push(CX.textBlock(ls, spot.cx, spot.y + h/2, LAB, "var(--ink-2)", LABLH));
+    }
 
-  order.forEach(function(k){
-    var p = place[k], hue = hues[k], list = items[k]||[];
-    out.push('<path d="'+CX.roundRect(p.x,p.y,p.w,p.h,6)+'" fill="var(--sheet)" stroke="var(--rule)" stroke-width="1"/>');
-    out.push('<path d="M'+CX.r2(p.x+6)+' '+CX.r2(p.y+1)+'h'+CX.r2(p.w-12)+'" stroke="'+hue+'" stroke-width="3"/>');
-    out.push('<text x="'+CX.r2(p.x+14)+'" y="'+CX.r2(p.y+20)+'" font-family="'+SANS+'" font-size="11px" '+
-             'font-weight="600" letter-spacing="1.6" fill="'+hue+'">'+CX.esc(names[k].toUpperCase())+'</text>');
-    out.push('<text x="'+CX.r2(p.x+p.w-14)+'" y="'+CX.r2(p.y+20)+'" text-anchor="end" font-family="'+SANS+
-             '" font-size="11px" fill="var(--muted)">'+list.length+'</text>');
-
-    var y = p.y + HEADH + ROWPAD;
-    list.forEach(function(txt){
-      var ls = itemLines(txt, p.w), h = itemH(ls.length) - 2;
-      out.push('<path d="'+CX.roundRect(p.x+14, y, p.w-28, h, 3)+'" fill="var(--paper)" stroke="var(--rule)" stroke-width="1"/>');
-      out.push('<path d="M'+CX.r2(p.x+14)+' '+CX.r2(y+2)+'v'+CX.r2(h-4)+'" stroke="'+hue+'" stroke-width="2.5"/>');
-      out.push(CX.textBlock(ls, p.x+24, y+h/2, IT, "var(--ink)", ITEMLH, "start"));
-      y += h + 2 + ITEMGAP;
+    /* same column: each transition in its own slot, arrow on the slot's inner
+       edge and its label right beside it */
+    var vLane = { l:0, r:0 };
+    p.vert.forEach(function(t){
+      var left = !!LCOL[t.f], side = left ? "l" : "r";
+      var lane = vLane[side]++, n = left ? p.vLeft : p.vert.length - p.vLeft;
+      var a = rects[t.f], slot = labSlot(colW, n);
+      var down = rects[t.to].y > a.y;
+      var x = left ? a.x + (lane+1)*slot - 14 : a.x + a.w - (lane+1)*slot + 14;
+      var yTop = rowTopBottom + 5, yBot = rowBotTop - 5;
+      stroke('M'+CX.r2(x)+' '+CX.r2(down ? yTop : yBot)+'L'+CX.r2(x)+' '+CX.r2(down ? yBot : yTop));
+      label(t.l, left ? x - 9 : x + 9, midY, labMaxW(colW, n), left ? "end" : "start");
     });
-    if(!list.length){
-      out.push('<text x="'+CX.r2(p.x+14)+'" y="'+CX.r2(p.y+HEADH+ROWPAD+10)+'" font-family="'+SERIF+
-               '" font-size="12px" font-style="italic" fill="var(--muted)">nothing here</text>');
-    }
-  });
 
-  out.push("</svg>");
-  return out.join("");
-};
+    /* diagonal: out of the left panel, up or down the channel beside Confusion,
+       then in along the band above or below it */
+    var dLane = { top:0, bot:0 };
+    p.diag.forEach(function(t, di){
+      var e = ends(t), L = rects[e.L], R = rects[e.R], up = !!TROW[e.R];
+      var lane = up ? dLane.top++ : dLane.bot++;
+      /* lanes share the channel beside Confusion, so the spread has to fit in it */
+      var step = Math.min(12, (gapW - 14) / Math.max(1, p.diag.length - 1));
+      var sx = sliver + (di - (p.diag.length-1)/2) * step;
+      var yH = up ? conf.y - 16 - lane*22 : conf.y + conf.h + 16 + lane*22;
+      var yL = up ? L.y + 26 + lane*22 : L.y + L.h - 26 - lane*22;
+      var pts = [[L.x + L.w, yL], [sx, yL], [sx, yH], [R.x, yH]];
+      if(t.f === e.R) pts.reverse();
+      stroke(rounded(pts, 10));
+      label(t.l, (sx + R.x)/2, yH, R.x - sx - 30);
+    });
+
+    /* everything else (same row, and anything joining Confusion) bows across */
+    function unit(a, b){
+      var dx = (b.x+b.w/2)-(a.x+a.w/2), dy = (b.y+b.h/2)-(a.y+a.h/2);
+      var len = Math.hypot(dx,dy) || 1;
+      return [dx/len, dy/len];
+    }
+    function edge(r, sx, sy){
+      var hw = r.w/2+8, hh = r.h/2+8;
+      var t1 = sx ? hw/Math.abs(sx) : Infinity, t2 = sy ? hh/Math.abs(sy) : Infinity;
+      var k = Math.min(t1,t2);
+      return [r.x+r.w/2 + sx*k, r.y+r.h/2 + sy*k];
+    }
+    var bowLane = {};
+    p.bows.forEach(function(t){
+      var a = rects[t.f], b = rects[t.to];
+      var u = unit(a, b);
+      var p0 = edge(a, u[0], u[1]), p1 = edge(b, -u[0], -u[1]);
+      /* The bow is measured in a canonical frame, from whichever endpoint sorts
+         first, not from the arrow's own direction. Flipping the sign per lane in
+         the arrow's frame cancels against the reversal, so a there-and-back pair
+         came out as two identical curves with two labels on the same spot. */
+      var key = [t.f, t.to].sort(), lane = (bowLane[key.join(">")] || 0);
+      bowLane[key.join(">")] = lane + 1;
+      var c = unit(rects[key[0]], rects[key[1]]);
+      /* A same-row bow is held to the outer side of its row, away from Confusion
+         and clear of the band a diagonal turns in. Bowing inward put its label on
+         the same strip as the diagonal's, where the two read as one label. */
+      var away = (TROW[t.f] && TROW[t.to]) ? -1 : (BROW[t.f] && BROW[t.to]) ? 1 : 0;
+      var bow;
+      if(away){
+        var half = (away < 0 ? rects.complex.h : rects.chaotic.h) / 2;
+        var off  = Math.min(Math.max(half - 30, 14), 46) * (1 + lane*0.55);
+        bow = 2 * off * away * Math.sign(c[0] || 1);
+      } else {
+        bow = 26 * (1 + Math.floor(lane/2) * 0.9) * (lane % 2 ? -1 : 1);
+      }
+      var mx = (p0[0]+p1[0])/2, my = (p0[1]+p1[1])/2;
+      var qx = mx - c[1]*bow, qy = my + c[0]*bow;
+      stroke('M'+CX.r2(p0[0])+' '+CX.r2(p0[1])+'Q'+CX.r2(qx)+' '+CX.r2(qy)+' '+
+             CX.r2(p1[0])+' '+CX.r2(p1[1]));
+      /* a bow can slide its label along itself, which is how a short one between
+         two close panels finds open board instead of sitting on a panel corner */
+      function on(s){
+        var m = 1-s;
+        return [m*m*p0[0] + 2*m*s*qx + s*s*p1[0], m*m*p0[1] + 2*m*s*qy + s*s*p1[1]];
+      }
+      var mid = on(0.5);
+      label(t.l, mid[0], mid[1], colW - 40, null, on);
+    });
+
+    /* labels after every line, so no later route paints over one already placed */
+    return CX.defs() + lines.join("") + marks.join("");
+  }
+
+  return { plan:plan, draw:draw };
+})();
