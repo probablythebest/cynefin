@@ -1564,9 +1564,21 @@ flowchart TD
     return String(s).replace(/"/g, "'").replace(/[\r\n]+/g, " ").trim();
   }
 
+  /* cynefin-beta lays each domain out in a fixed-height band, so items collide once
+     a domain gets busy. Measured against the real board: at the default 880 width,
+     21 items produced 3 overlapping pairs; 1000 and above produced none. Past 10
+     items in ONE domain it overlaps at any width, so the diagram caps and says so
+     rather than drawing a mess. The board itself always keeps everything. */
+  var DIAGRAM_MAX_PER_DOMAIN = 10;
+
   function buildSource(){
     var L = [];
-    L.push('%%{init:{"cynefin":{"showDomainDescriptions":' + (showDesc.checked ? "true" : "false") + '}}}%%');
+    var counts  = ORDER.map(function(k){ return byDomain(k).length; });
+    var busiest = Math.max.apply(null, counts.concat([0]));
+    var width   = Math.min(1800, Math.max(880, 760 + busiest * 90));
+
+    L.push('%%{init:{"cynefin":{"showDomainDescriptions":' +
+           (showDesc.checked ? "true" : "false") + ',"width":' + width + '}}}%%');
     L.push("cynefin-beta");
     if(title.trim()) L.push("title " + q(title));
 
@@ -1575,7 +1587,13 @@ flowchart TD
       if(!list.length) return;
       L.push("");
       L.push("  " + k);
-      list.forEach(function(it){ L.push('    "' + q(it.t) + '"'); });
+      var shown = list, hidden = 0;
+      if(list.length > DIAGRAM_MAX_PER_DOMAIN){
+        shown  = list.slice(0, DIAGRAM_MAX_PER_DOMAIN - 1);
+        hidden = list.length - shown.length;
+      }
+      shown.forEach(function(it){ L.push('    "' + q(it.t) + '"'); });
+      if(hidden) L.push('    "+ ' + hidden + ' more on the board"');
     });
 
     var real = trans.filter(function(t){ return t.f !== t.to; });

@@ -84,6 +84,23 @@ It is a plain `<script src>`, deliberately not `defer`: the inline scripts after
 are not deferred, so a deferred library would load after them and be missing when
 they run.
 
+## Diagram density
+
+`cynefin-beta` lays each domain out in a fixed-height band, so a busy board makes
+items collide. Two things keep it readable, both measured rather than guessed:
+
+**The diagram width scales with the busiest domain.** At Mermaid's default 880, a
+21-item board produced 3 overlapping pairs; 1000 and above produced none. The width
+is now `760 + busiest * 90`, clamped to 880-1800, so it grows only as needed.
+
+**Past 10 items in one domain, no width helps.** Overlaps reappear at 11 and worsen
+from there, because the band height is fixed. So the diagram draws the first 9 and
+adds a "+ N more on the board" marker. The board itself always keeps every item;
+only the picture is capped, and it says so rather than silently hiding work or
+drawing a mess.
+
+If you need the whole thing rendered, split the board or export the JSON.
+
 ## Export and import
 
 Export writes the board to a JSON file named from the board title plus an ISO date,
