@@ -118,6 +118,30 @@ erase the line behind them, which only works while the two agree.
 an edge later in the list paints over the plate of a label already placed, and the
 line reads as a strikethrough through the text.
 
+### Transition routing on the board
+
+One generic curve cannot serve every pair, so `CX.board` picks a route by where the
+two domains sit, and sizes the board to fit what it picked.
+
+**Same column** runs straight down the row gutter, held to the panel's inner edge so
+the label sits on the column center without covering the arrow. The gutter is sized
+from the number of lanes: it used to be a flat 18px, which was narrower than the
+padding held off each panel, so the curve collapsed to a 2px stub with the arrowhead
+clipped off and only the label showed.
+
+**Same row** bows across the middle, which has room for one. The bow is measured from
+whichever endpoint sorts first, not from the arrow's own direction: flipping the sign
+per lane in the arrow's frame cancels against the reversal, and a there-and-back pair
+came out as two identical curves with two labels on the same spot.
+
+**Diagonal** takes a rounded L out of the left-column panel, up or down the channel
+beside Confusion, then in along the band above or below it. A straight diagonal runs
+under the Confusion panel, and panels are drawn over the lines, so most of the arrow
+vanished. Confusion is centered on the row gutter and can be taller than the rows
+beside it, so the quadrant panels grow until that band exists.
+
+Repeats between the same pair take separate lanes in all three routes.
+
 ## Diagram density
 
 There is no density limit and nothing is capped. Panels grow to fit their
