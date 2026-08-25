@@ -739,7 +739,9 @@
         rects[k] = { x:r.left-box.left, y:r.top-box.top, w:r.width, h:r.height };
       });
       arrowEl.setAttribute("viewBox", "0 0 " + Math.round(box.width) + " " + Math.round(box.height));
-      arrowEl.innerHTML = CX.arrows.draw(plan, rects, "var(--sheet)");
+      /* the labels sit in the gutter between the panels, where what shows through
+         is the page behind the board, not the panels themselves */
+      arrowEl.innerHTML = CX.arrows.draw(plan, rects, "var(--paper)");
       errEl.hidden = true;
     }catch(e){ showErr(e); }
   }
@@ -883,8 +885,11 @@
       .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "cynefin-board";
   }
 
-  /* one download path for both formats, so a fix to either reaches both */
-  function download(text, ext, type, note){
+  /* One download path for both formats, so a fix to either reaches both. The
+     count is passed in rather than read from items here: the two formats do not
+     carry the same board, and reading items.length made the Mermaid export claim
+     to have written the unsorted items the very same sentence said it dropped. */
+  function download(text, ext, type, count, note){
     var stamp = new Date().toISOString().slice(0, 10);     /* ISO 8601 date */
     var name = slug(title) + "-" + stamp + "." + ext;
     try{
@@ -896,7 +901,7 @@
       a.click();
       a.remove();
       setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-      say("Exported " + plural(items.length,"item") + " and " + plural(trans.length,"transition") +
+      say("Exported " + plural(count,"item") + " and " + plural(trans.length,"transition") +
           " to " + name + (note ? ". " + note : "") +
           ". If nothing downloaded, this page is in a sandbox that blocks it; open the local copy.");
     }catch(e){
@@ -912,14 +917,14 @@
       title: title,
       items: items.map(function(i){ return { id:i.id, t:i.t, d:i.d || null }; }),
       trans: trans.map(function(t){ return { id:t.id, f:t.f, to:t.to, l:t.l || "" }; })
-    }, null, 2), "json", "application/json");
+    }, null, 2), "json", "application/json", items.length);
   });
 
   document.getElementById("exportMmd").addEventListener("click", function(){
     /* cynefin-beta has no place to put an item that is not in a domain, so say
        so at the time rather than letting the unsorted tray vanish silently */
     var loose = items.filter(function(i){ return !i.d; }).length;
-    download(buildSource(), "mmd", "text/plain", loose
+    download(buildSource(), "mmd", "text/plain", items.length - loose, loose
       ? plural(loose,"unsorted item") + " left out: cynefin-beta has no unsorted list"
       : "");
   });
@@ -928,9 +933,13 @@
   /* Import takes either format and works out which from the content, not the
      extension: a .txt holding cynefin-beta should still come in. */
   function parseAny(text){
-    var head = text.replace(/^﻿/, "").trim();
-    if(head.charAt(0) === "{" || head.charAt(0) === "[") return parseBoard(text);
-    if(/^\s*cynefin-beta\b/m.test(text)) return parseMermaid(text);
+    /* The byte order mark has to come off before the parsers see it, not just
+       before the sniff: JSON.parse refuses a leading BOM, so a board saved by a
+       Windows editor was recognised as JSON and then rejected as invalid JSON. */
+    var body = text.replace(/^﻿/, "");
+    var head = body.trim();
+    if(head.charAt(0) === "{" || head.charAt(0) === "[") return parseBoard(body);
+    if(/^\s*cynefin-beta\b/m.test(body)) return parseMermaid(body);
     throw new Error("that file is neither a Cynefin board nor cynefin-beta source");
   }
 

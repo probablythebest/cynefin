@@ -210,13 +210,17 @@ everything on the board including the unsorted tray.
 **Export Mermaid** writes `cynefin-beta` source, for pasting into any Mermaid-capable
 tool. It cannot carry unsorted items, because the format has nowhere to put an item
 that is not under a domain. The export says so at the time, naming the count, rather
-than letting the tray disappear quietly. The `%%{init}%%` line carries a width and
+than letting the tray disappear quietly, and the count in front of that note is what
+was actually written: reading `items.length` there had it claiming to have exported the
+items the same sentence said it dropped. The `%%{init}%%` line carries a width and
 height sized from the busiest domain: those are what stop the quadrants overlapping in
 a tool that draws on a fixed canvas, which ours no longer does.
 
 **Import** takes either, and works out which from the content rather than the
 extension, so a `.txt` holding `cynefin-beta` still comes in. It replaces the board
-after a confirm when there is work to lose.
+after a confirm when there is work to lose. A byte order mark is stripped before the
+parsers run, not just before the sniff: `JSON.parse` refuses a leading BOM, so a board
+saved by a Windows editor was recognised as JSON and then rejected as invalid JSON.
 
 Both parsers refuse rather than half-import, and leave the current board untouched
 when they do: invalid JSON, a wrong or missing `format`, a missing items list, a file
